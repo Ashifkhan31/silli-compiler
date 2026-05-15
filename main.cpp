@@ -30,7 +30,7 @@ int main(int argc, char** args)
     std::string code;
     Compiler compiler(astRoot, code);
 
-    if (compiler.compile()) return 0;
+    if (!compiler.compile()) return 0;
 
     writeFile(code);
 
