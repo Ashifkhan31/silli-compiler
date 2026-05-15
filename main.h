@@ -4,7 +4,8 @@
 #include <fstream>
 #include <string>
 
-bool readfile(const char* path, std::string& source);
+void writeFile(std::string& code);
+bool readFile(const char* path, std::string& source);
 
 #endif
 

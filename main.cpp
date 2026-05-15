@@ -3,6 +3,7 @@
 
 #include "scanner.h"
 #include "parser.h"
+#include "compiler.h"
 
 int main(int argc, char** args)
 {
@@ -13,7 +14,7 @@ int main(int argc, char** args)
     }
 
     std::string source;
-    if(!readfile(args[1], source)) return 0;
+    if(!readFile(args[1], source)) return 0;
 
     std::vector<Token> tokens;
     Scanner scanner(source, tokens);
@@ -26,12 +27,37 @@ int main(int argc, char** args)
 
     if (parser.hadError) return 0;
 
-    //compile
+    std::string code;
+    Compiler compiler(astRoot, code);
+
+    if (compiler.compile()) return 0;
+
+    writeFile(code);
 
     return 0;
 }
 
-bool readfile(const char* path, std::string& source)
+void writeFile(std::string& code)
+{
+    std::fstream file;
+    file.open("output.s", std::ios::out | std::ios::trunc);
+
+    if (!file.is_open())
+    {
+        std::cout<<"Unable to open output file.\n";
+        return;
+    }
+
+    if (!file.write(code.data(), code.size()))
+    {
+        std::cout<<"Failed to write to output file.\n";
+        return;
+    }
+
+    file.close();
+}
+
+bool readFile(const char* path, std::string& source)
 {
     std::fstream file;
     file.open(path, std::ios::in);
