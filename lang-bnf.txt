@@ -1,0 +1,126 @@
+#start_symbol S;
+
+end -> integer;
+end -> double;
+end -> character;
+end -> string;
+end -> true;
+end -> false;
+end -> iden;
+
+end -> lb expr rb;
+expr -> logic exprlist;
+expr -> ;
+exprlist -> comma logic exprlist;
+exprlist -> ;
+
+iden -> name;
+
+iden -> dot name getlist;
+getlist -> dot name getlist;
+getlist -> ;
+
+iden -> tick name inboxlist;
+inboxlist -> ls index rs inboxlist;
+inboxlist -> ;
+index -> name;
+index -> integer;
+
+type -> btype typearr;
+btype -> dollar name;
+btype -> int;
+btype -> real;
+btype -> bool;
+btype -> char;
+typearr -> ls size rs typearr;
+typearr -> ;
+size -> name;
+size -> integer;
+size -> ;
+
+S -> decl;
+
+decl -> struct name lb varlist rb decl;
+varlist -> vardecl varlist;
+varlist -> ;
+
+decl -> fun type name lp params rp block decl;
+params -> param paramlist;
+paramlist -> comma param paramlist;
+paramlist -> ;
+param -> type name;
+
+decl -> vardecl decl;
+vardecl -> type name optional semi;
+optional -> equal logic;
+optional -> ;
+
+decl -> eof;
+
+block -> lb stmtlist rb;
+
+stmtlist -> stmt stmtlist;
+stmtlist -> ;
+
+stmt -> vardecl;
+stmt -> logic semi;
+stmt -> set iden equal logic semi;
+
+stmt -> if lp logic rp block elsestmt;
+elsestmt -> elif lp logic rp block elsestmt;
+elsestmt -> else block;
+elsestmt -> ;
+
+stmt -> while lp logic rp block;
+
+stmt -> for lp forline rp block;
+forline -> forinit forcond semi forupd;
+forinit -> vardecl;
+forinit -> ;
+forcond -> logic;
+forcond -> ;
+forupd -> logic;
+forupd -> ;
+
+logic -> comp logictail;
+logictail -> and comp logictail;
+logictail -> or comp logictail;
+logictail -> ;
+
+comp -> rel comptail;
+comptail -> eqeq rel comptail;
+comptail -> noteq rel comptail;
+comptail -> ;
+
+rel -> term reltail;
+reltail -> less term reltail;
+reltail -> great term reltail;
+reltail -> lsseq term reltail;
+reltail -> grteq term reltail;
+reltail -> ;
+
+term -> factor termtail;
+termtail -> plus factor termtail;
+termtail -> minus factor termtail;
+termtail -> ;
+
+factor -> unary factortail;
+factortail -> star unary factortail;
+factortail -> slash unary factortail;
+factortail -> percnt unary factortail;
+factortail -> ;
+
+unary -> minus end;
+unary -> not end;
+unary -> call;
+
+call -> lp logic rp;
+
+call -> colon name lp args rp;
+args -> logic arglist;
+arglist -> comma logic arglist;
+arglist -> ;
+
+call -> cast less type great lp logic rp;
+
+call -> end;

@@ -6,17 +6,25 @@
 
 class Scanner
 {
-    int index = 0;
+    int start = 0;
+    int current = 0;
+    int line = 1;
     const std::string& source;
     std::vector<Token>& tokens;
 
     char peek();
-    void consume();
+    char peekNext();
+    void advance();
+    void consume(TokenType type);
+    void skip();
     bool isAtEnd();
-    Token makeToken(TokenType type, int start, int length);
-    Token makeEndToken();
-    void scanTokens();
+    void character();
+    void string();
     void number();
+    bool checkKeyword(const char* str, int index, int length);
+    bool isKeyword(TokenType& type);
+    void identifier();
+    void scanTokens();
 
     public: 
 

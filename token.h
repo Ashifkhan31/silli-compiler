@@ -3,14 +3,19 @@
 
 enum class TokenType
 {
-    NUMBER,
-    PLUS,
-    MINUS,
-    STAR,
-    SLASH,
-    LEFT_PAREN,
-    RIGHT_PAREN,
-    END,
+    INTEGER, DOUBLE, CHARACTER, STRING, TRUE, FALSE,
+
+    INT, REAL, CHAR, BOOL, DOLLAR,
+
+    IDENTIFIER, STRUCT, FUN, SET, IF, ELIF, ELSE, WHILE, FOR, CAST, AND, OR,
+    
+    EQUAL_EQUAL, NOT_EQUAL, LESS, GREAT, LESS_EQUAL, GREAT_EQUAL,
+    PLUS, MINUS, STAR, SLASH, PERCENT, NOT,
+
+    EQUAL, COLON, SEMI_COLON, LEFT_BRACKET, RIGHT_BRACKET, LEFT_BRACE,
+    RIGHT_BRACE, LEFT_PAREN, RIGHT_PAREN, COMMA, UP, DOT,
+
+    END      
 };
 
 struct Token
@@ -18,6 +23,7 @@ struct Token
     TokenType type;    
     const char* start;
     int length;
+    int line;
 };
 
 #endif

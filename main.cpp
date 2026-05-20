@@ -19,20 +19,9 @@ int main(int argc, char** args)
     std::vector<Token> tokens;
     Scanner scanner(source, tokens);
     scanner.scan();
+    scanner.printTokens();
 
     if (scanner.hadError) return 0;
-
-    Parser parser = Parser(tokens);
-    ASTnode* astRoot = parser.parse();
-
-    if (parser.hadError) return 0;
-
-    std::string code;
-    Compiler compiler(astRoot, code);
-
-    if (!compiler.compile()) return 0;
-
-    writeFile(code);
 
     return 0;
 }
