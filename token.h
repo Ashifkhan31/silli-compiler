@@ -1,6 +1,8 @@
 #ifndef token_h
 #define token_h
 
+#include <utility>
+
 enum class TokenType
 {
     INTEGER, DOUBLE, CHARACTER, STRING, TRUE, FALSE,
@@ -22,8 +24,8 @@ struct Token
 {
     TokenType type;    
     const char* start;
-    int length;
-    int line;
+    std::size_t length;
+    std::size_t line;
 };
 
 #endif

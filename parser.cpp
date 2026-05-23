@@ -1,12 +1,63 @@
 #include "common.h"
 #include "parser.h"
 #include "ASTnode.h"
-#include <charconv>
 
 Parser::Parser(std::vector<Token>& _tokens) : tokens{_tokens} {}
 
 ASTnode* Parser::parse()
 {
+    return unary();
+}
+
+ASTnode* Parser::unary()
+{
+    if (check(TokenType::MINUS, TokenType::NOT))
+    {
+        Token* token = consume();
+        ASTnode* child = primary();
+        return new Unary(child, token);   
+    }
+
+    return primary();
+}
+
+ASTnode* Parser::primary()
+{   
+    if (check(TokenType::INTEGER))
+    {
+        Token* token = consume();
+        std::string numStr{token->start, token->length};
+        return new Integer(std::stoi(numStr), token);
+    }
+
+    if (check(TokenType::DOUBLE))
+    {
+        Token* token = consume();
+        std::string numStr{token->start, token->length};
+        return new Double(std::stod(numStr), token);
+    }
+    
+    if (check(TokenType::CHARACTER))
+    {
+        Token* token = consume();
+        char c = *(token->start + 1);
+        return new Character(c, token);
+    }
+
+    if (check(TokenType::STRING))
+    {
+        Token* token = consume();
+        std::string str{token->start + 1, token->length - 2};
+        return new String(str, token);
+    }
+
+    if (check(TokenType::TRUE, TokenType::FALSE))
+    {
+        Token* token = consume();
+        bool value = token->type == TokenType::TRUE ? true : false;
+        return new Boolean(value, token);
+    }
+    
     return nullptr;
 }
 

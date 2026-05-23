@@ -1,6 +1,7 @@
 #include "compiler.h"
 
-Compiler::Compiler(ASTnode* _root, std::string& _code) : root(_root), code(_code)
+Compiler::Compiler(ASTnode* _root, std::string& _code)
+                   : root(_root), code(_code)
 {
     code.reserve(1000);
     constants.reserve(1000);

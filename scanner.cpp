@@ -59,6 +59,7 @@ void Scanner::character()
         return;
     }
 
+    hadError = true;
     std::cout<<"Unexpected character "<<"'"<<"'"<<"'"<<" in line "<<line<<".\n";
     skip();
 }
@@ -77,6 +78,7 @@ void Scanner::string()
         return;
     }
 
+    hadError = true;
     std::cout<<"Unterminated string at line "<<line<<".\n";
     skip();
 }
@@ -200,6 +202,11 @@ bool Scanner::isKeyword(TokenType& type)
             else if (checkKeyword("or", 1, 2))
             {
                 type = TokenType::FOR;
+                return true;
+            }
+            else if (checkKeyword("alse", 1, 4))
+            {
+                type = TokenType::FALSE;
                 return true;
             }
             return false;

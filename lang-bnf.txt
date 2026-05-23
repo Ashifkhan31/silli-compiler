@@ -4,9 +4,10 @@ end -> integer;
 end -> double;
 end -> character;
 end -> string;
-end -> true;
-end -> false;
+end -> truthvalue;
 end -> iden;
+truthvalue -> true;
+truthvalue -> false;
 
 end -> lb expr rb;
 expr -> logic exprlist;
@@ -112,9 +113,10 @@ factortail -> ;
 
 unary -> minus end;
 unary -> not end;
+call -> nested;
 unary -> call;
 
-call -> lp logic rp;
+nested -> lp logic rp;
 
 call -> colon name lp args rp;
 args -> logic arglist;

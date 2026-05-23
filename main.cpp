@@ -3,7 +3,8 @@
 
 #include "scanner.h"
 #include "parser.h"
-#include "compiler.h"
+#include "typechecker.h"
+#include "interpreter.h"
 
 int main(int argc, char** args)
 {
@@ -22,6 +23,18 @@ int main(int argc, char** args)
     scanner.printTokens();
 
     if (scanner.hadError) return 0;
+
+    Parser parser(tokens);
+    ASTnode* root = parser.parse();
+
+    TypeChecker typeChecker{};
+    typeChecker.execute(root);
+
+    if (typeChecker.hadError) return 0;
+
+    Interpreter interpreter{};
+    InterpreterValue* value = interpreter.execute(root);
+    value->print();
 
     return 0;
 }

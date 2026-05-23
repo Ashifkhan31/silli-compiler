@@ -6,9 +6,9 @@
 
 class Scanner
 {
-    int start = 0;
-    int current = 0;
-    int line = 1;
+    std::size_t start = 0;
+    std::size_t current = 0;
+    std::size_t line = 1;
     const std::string& source;
     std::vector<Token>& tokens;
 
