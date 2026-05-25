@@ -27,6 +27,8 @@ int main(int argc, char** args)
     Parser parser(tokens);
     ASTnode* root = parser.parse();
 
+    if (parser.hadError) return 0;
+
     TypeChecker typeChecker{};
     typeChecker.execute(root);
 

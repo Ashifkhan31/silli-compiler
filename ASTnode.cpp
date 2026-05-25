@@ -16,9 +16,10 @@ ASTvalue* AstnodeOperator::execute(ASTnode* node)
           return execute(dynamic_cast<Boolean*>(node));
         case ASTnodeType::UNARY:
           return execute(dynamic_cast<Unary*>(node));
+        case ASTnodeType::FACTOR:
+          return execute(dynamic_cast<Factor*>(node));
     }
 
-    std::cout<<"error\n";
     return nullptr;
 }
 
@@ -86,4 +87,15 @@ Unary::Unary(ASTnode* _child, Token* _token)
 ASTvalue* Unary::execute(AstnodeOperator* operation)
 {
     return operation->execute(dynamic_cast<Unary*>(this));
+}
+
+Factor::Factor(ASTnode* _left, ASTnode* _right, Token* _token)
+      : ASTnode(ASTnodeType::FACTOR), left(_left), right(_right), token(_token)
+{
+    
+}
+
+ASTvalue* Factor::execute(AstnodeOperator* operation)
+{
+    return operation->execute(dynamic_cast<Factor*>(this));
 }

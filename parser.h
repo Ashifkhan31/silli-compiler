@@ -12,13 +12,14 @@ class Parser
     bool check(TokenType a);
     bool check(TokenType a, TokenType b);
     Token* consume();
-    Token* consume(TokenType a, const char* message);
+    Token* consume(TokenType a, std::string message);
     bool isAtEnd();
     
     public:
 
     Parser(std::vector<Token>& _tokens);
     ASTnode* parse();
+    ASTnode* factor();
     ASTnode* unary();
     ASTnode* primary();
     bool hadError = false;

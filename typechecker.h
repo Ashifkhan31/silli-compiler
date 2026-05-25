@@ -2,6 +2,7 @@
 #define typechecker_h
 
 #include "ASTnode.h"
+#include "common.h"
 
 class TypeChecker : public AstnodeOperator
 {
@@ -9,40 +10,54 @@ class TypeChecker : public AstnodeOperator
       
     bool hadError = false;
     TypeChecker() {}
+
+     
+    ASTvalue* execute(ASTnode* node) override
+    {
+        try
+        {
+            return AstnodeOperator::execute(node);
+        }
+        catch(Error error)
+        {
+            hadError = true;
+            error.print();
+        }
+
+        return nullptr;
+    }
     
-    using AstnodeOperator::execute;
-    
-    virtual ASTvalue* execute(Integer* node)
+    ASTvalue* execute(Integer* node) override
     {
         node->exprType = ExprType::INTEGER;
         return nullptr;
     }
     
-    virtual ASTvalue* execute(Double* node)
+    ASTvalue* execute(Double* node) override
     {
         node->exprType = ExprType::DOUBLE;
         return nullptr;
     }
     
-    virtual ASTvalue* execute(Character* node)
+    ASTvalue* execute(Character* node) override
     {
         node->exprType = ExprType::CHARACTER;
         return nullptr;
     }
     
-    virtual ASTvalue* execute(String* node)
+    ASTvalue* execute(String* node) override
     {
         node->exprType = ExprType::STRING;
         return nullptr;
     }
     
-    virtual ASTvalue* execute(Boolean* node)
+    ASTvalue* execute(Boolean* node) override
     {
         node->exprType = ExprType::BOOLEAN;
         return nullptr;
-    }
+    }    
     
-    virtual ASTvalue* execute(Unary* node)
+    ASTvalue* execute(Unary* node) override
     {
         ASTnode* child = node->child.get();
         child->execute(this);
@@ -69,12 +84,51 @@ class TypeChecker : public AstnodeOperator
             return nullptr;
         }
 
-        std::cout<<"Operand type doesn't match with the operator at line "
-                 <<node->token->line<<".\n";
+        throw Error{"Operand type doesn't match with the operatoe [line "
+                    + std::to_string(node->token->line)
+                    + "]."};
+    }
 
-        node->exprType = ExprType::VOID;
-        hadError = true;
-        return nullptr;
+    ASTvalue* execute(Factor* node) override
+    {
+        node->left->execute(this);
+        node->right->execute(this);
+
+        ExprType leftExprType = node->left->exprType;
+        ExprType rightExprType = node->right->exprType;
+        bool isPercent = node->token->type == TokenType::PERCENT;
+
+        if (leftExprType == ExprType::DOUBLE &&
+            rightExprType == ExprType::DOUBLE && !isPercent)
+        {
+            node->exprType = ExprType::DOUBLE;          
+            return nullptr;
+        }
+        
+        if (leftExprType == ExprType::DOUBLE &&
+            rightExprType == ExprType::INTEGER && !isPercent)
+        {
+            node->exprType = ExprType::DOUBLE;          
+            return nullptr;
+        }
+        
+        if (leftExprType == ExprType::INTEGER &&
+            rightExprType == ExprType::DOUBLE && !isPercent)
+        {
+            node->exprType = ExprType::DOUBLE;          
+            return nullptr;
+        }
+        
+        if (leftExprType == ExprType::INTEGER &&
+            rightExprType == ExprType::INTEGER)
+        {
+            node->exprType = ExprType::INTEGER;          
+            return nullptr;
+        }
+        
+        throw Error{"Operand type doesn't match with the operator [line "
+                    + std::to_string(node->token->line)
+                    + "]."};
     }
 };
 

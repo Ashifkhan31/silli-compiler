@@ -45,6 +45,11 @@ class Interpreter : public AstnodeOperator
 {
     public:
 
+    InterpreterValue* executeNode(ASTnode* const node)
+    {
+        return dynamic_cast<InterpreterValue*>(node->execute(this));
+    }
+
     InterpreterValue* execute(ASTnode* node) override
     {
         return dynamic_cast<InterpreterValue*>(AstnodeOperator::execute(node));      
@@ -77,8 +82,7 @@ class Interpreter : public AstnodeOperator
     
     InterpreterValue* execute(Unary* node) override
     {
-        ASTvalue* astValue = node->child->execute(this);
-        InterpreterValue* value = dynamic_cast<InterpreterValue*>(astValue);
+        InterpreterValue* value = executeNode(node->child.get());
         TokenType tokenType = node->token->type;
         
         if(std::holds_alternative<int>(value->value) &&
@@ -93,13 +97,75 @@ class Interpreter : public AstnodeOperator
             value->value = -std::get<double>(value->value);
         }
         
-        if(std::holds_alternative<bool>(value->value) &&
-           tokenType == TokenType::NOT)
+        if(tokenType == TokenType::NOT)
         {
             value->value = !std::get<bool>(value->value);
         }
 
         return value;
+    }
+
+    template<typename A, typename B, typename R>
+    R arithmeticOp(Value a, Value b, TokenType type)
+    {
+        if (type == TokenType::STAR)
+        {
+            return std::get<A>(a) * std::get<B>(b);
+        }
+        if (type == TokenType::SLASH)
+        {
+            return std::get<A>(a) / std::get<B>(b);
+        }
+
+        return R{};
+    }
+    
+    InterpreterValue* execute(Factor* node) override
+    {
+        InterpreterValue* left = executeNode(node->left.get());
+        InterpreterValue* right = executeNode(node->right.get());
+
+        TokenType tokenType = node->token->type;
+
+        if (std::holds_alternative<double>(left->value)
+            && std::holds_alternative<double>(right->value))
+        {
+            left->value = arithmeticOp<double, double, double>(left->value,
+                                                           right->value,
+                                                           tokenType); 
+        }
+        if (std::holds_alternative<double>(left->value)
+            && std::holds_alternative<int>(right->value))
+        {
+            left->value = arithmeticOp<double, int, double>(left->value,
+                                                        right->value,
+                                                        tokenType); 
+        }
+        if (std::holds_alternative<int>(left->value)
+            && std::holds_alternative<double>(right->value))
+        {
+            left->value = arithmeticOp<int, double, double>(left->value,
+                                                        right->value,
+                                                        tokenType); 
+        }
+        if (std::holds_alternative<int>(left->value)
+            && std::holds_alternative<int>(right->value))
+        {
+            if (tokenType == TokenType::PERCENT)
+            {
+                left->value = std::get<int>(left->value) %
+                              std::get<int>(right->value);
+            }
+            else
+            {
+                left->value = arithmeticOp<int, int, int>(left->value,
+                                                          right->value,
+                                                          tokenType);    
+            } 
+        }
+
+        delete right;
+        return left;
     }
 };
 

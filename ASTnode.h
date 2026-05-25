@@ -15,6 +15,7 @@ enum class ASTnodeType
     STRING,
     BOOLEAN,
     UNARY,
+    FACTOR,
 };
 
 enum class ExprType
@@ -54,6 +55,7 @@ class Character;
 class String;
 class Boolean;
 class Unary;
+class Factor;
 
 class AstnodeOperator
 {
@@ -68,6 +70,7 @@ class AstnodeOperator
     virtual ASTvalue* execute(String* node) = 0;
     virtual ASTvalue* execute(Boolean* node) = 0;
     virtual ASTvalue* execute(Unary* node) = 0;
+    virtual ASTvalue* execute(Factor* node) = 0;
 };
 
 class Integer : public ASTnode
@@ -127,6 +130,17 @@ class Unary : public ASTnode
     Token* token;
 
     Unary(ASTnode* _child, Token* _token);
+    ASTvalue* execute(AstnodeOperator* operation);
+};
+
+class Factor : public ASTnode
+{
+    public:
+    std::unique_ptr<ASTnode> left;
+    std::unique_ptr<ASTnode> right;
+    Token* token;
+
+    Factor(ASTnode* _left, ASTnode* _right, Token* _token);
     ASTvalue* execute(AstnodeOperator* operation);
 };
 

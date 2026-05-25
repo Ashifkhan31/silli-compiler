@@ -6,7 +6,35 @@ Parser::Parser(std::vector<Token>& _tokens) : tokens{_tokens} {}
 
 ASTnode* Parser::parse()
 {
-    return unary();
+    try
+    {
+        ASTnode* node = factor();
+        consume(TokenType::END, "Unexpected symbol [line "
+                                + std::to_string(tokens[current].line)
+                                + "].");
+        return node;
+    }
+    catch(Error error)
+    {
+        error.print();
+        hadError = true;
+    }
+
+    return nullptr;
+}
+
+ASTnode* Parser::factor()
+{
+    ASTnode* left = unary();
+
+    while(check(TokenType::STAR, TokenType::SLASH) || check(TokenType::PERCENT))
+    {
+        Token* token = consume();
+        ASTnode* right = unary();
+        left = new Factor(left, right, token);
+    }
+    
+    return left;
 }
 
 ASTnode* Parser::unary()
@@ -58,7 +86,9 @@ ASTnode* Parser::primary()
         return new Boolean(value, token);
     }
     
-    return nullptr;
+    throw Error{"An expression is expected [line "
+                      + std::to_string(tokens[current].line)
+                      + "]."};
 }
 
 bool Parser::check(TokenType type)
@@ -75,15 +105,12 @@ bool Parser::check(TokenType type1, TokenType type2)
 Token* Parser::consume()
 {
     if (current < tokens.size()) return &tokens[current++];
-    std::cout<<"Unable to consume token.\n";
-    return nullptr;
+    throw Error{"Parser error: Unable to consume token."};
 }
 
-Token* Parser::consume(TokenType type, const char* message)
+Token* Parser::consume(TokenType type, std::string message)
 {
     if (current < tokens.size() && check(type)) return &tokens[current++];
-    hadError = true;
-    std::cout<<message<<"\n";
-    throw "error";
+    throw Error{message};
 }
 
