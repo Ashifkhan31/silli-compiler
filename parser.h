@@ -18,7 +18,11 @@ class Parser
     public:
 
     Parser(std::vector<Token>& _tokens);
-    ASTnode* parse();
+    Program* parse();
+    ASTnode* logical();
+    ASTnode* equivalent();
+    ASTnode* relational();
+    ASTnode* term();
     ASTnode* factor();
     ASTnode* unary();
     ASTnode* primary();

@@ -45,14 +45,9 @@ class Interpreter : public AstnodeOperator
 {
     public:
 
-    InterpreterValue* executeNode(ASTnode* const node)
+    InterpreterValue* execute(Program* node) override
     {
-        return dynamic_cast<InterpreterValue*>(node->execute(this));
-    }
-
-    InterpreterValue* execute(ASTnode* node) override
-    {
-        return dynamic_cast<InterpreterValue*>(AstnodeOperator::execute(node));      
+        return dynamic_cast<InterpreterValue*>(node->node->execute(this));      
     }
     
     InterpreterValue* execute(Integer* node) override
@@ -105,6 +100,202 @@ class Interpreter : public AstnodeOperator
         return value;
     }
 
+    InterpreterValue* execute(Term* node) override
+    {
+        InterpreterValue* left = executeNode(node->left.get());
+        InterpreterValue* right = executeNode(node->right.get());
+
+        Value leftValue = left->value;
+        Value rightValue = right->value;
+
+        TokenType tokenType = node->token->type;
+
+        if (checkType<double, double>(leftValue, rightValue))
+        {
+            leftValue = arithmeticOp<double, double, double>(leftValue, rightValue, tokenType); 
+        }
+        
+        if (checkType<double, int>(leftValue, rightValue))
+        {
+            leftValue = arithmeticOp<double, int, double>(leftValue, rightValue, tokenType); 
+        }
+        
+        if (checkType<int, double>(leftValue, rightValue))
+        {
+            leftValue = arithmeticOp<int, double, double>(leftValue, rightValue, tokenType); 
+        }
+        
+        if (checkType<int, int>(leftValue, rightValue))
+        {
+            leftValue = arithmeticOp<int, int, int>(leftValue, rightValue, tokenType);    
+        }
+
+        left->value = leftValue;
+        delete right;
+        return left;
+    }
+
+    InterpreterValue* execute(Factor* node) override
+    {
+        InterpreterValue* left = executeNode(node->left.get());
+        InterpreterValue* right = executeNode(node->right.get());
+
+        Value leftValue = left->value;
+        Value rightValue = right->value;
+
+        TokenType tokenType = node->token->type;
+
+        if (checkType<double, double>(leftValue, rightValue))
+        {
+            leftValue = arithmeticOp<double, double, double>(leftValue, rightValue, tokenType); 
+        }
+        
+        if (checkType<double, int>(leftValue, rightValue))
+        {
+            leftValue = arithmeticOp<double, int, double>(leftValue, rightValue, tokenType); 
+        }
+        
+        if (checkType<int, double>(leftValue, rightValue))
+        {
+            leftValue = arithmeticOp<int, double, double>(leftValue, rightValue, tokenType); 
+        }
+        
+        if (checkType<int, int>(leftValue, rightValue))
+        {
+            leftValue = arithmeticOp<int, int, int>(leftValue, rightValue, tokenType);    
+        }
+
+        left->value = leftValue;
+        delete right;
+        return left;
+    }
+    
+    InterpreterValue* execute(Relational* node) override
+    {
+        InterpreterValue* left = executeNode(node->left.get());
+        InterpreterValue* right = executeNode(node->right.get());
+
+        Value leftValue = left->value;
+        Value rightValue = right->value;
+
+        TokenType tokenType = node->token->type;
+        
+        if (checkType<double, double>(leftValue, rightValue))
+        {
+            leftValue = RelationalOp<double, double>(leftValue, rightValue, tokenType); 
+        }
+        
+        if (checkType<double, int>(leftValue, rightValue))
+        {
+            leftValue = RelationalOp<double, int>(leftValue, rightValue, tokenType); 
+        }
+        
+        if (checkType<int, double>(leftValue, rightValue))
+        {
+            leftValue = RelationalOp<int, double>(leftValue, rightValue, tokenType); 
+        }
+        
+        if (checkType<int, int>(leftValue, rightValue))
+        {
+            leftValue = RelationalOp<int, int>(leftValue, rightValue, tokenType);    
+        }
+
+        left->value = leftValue;
+        delete right;
+        return left;
+    }
+    
+    InterpreterValue* execute(Equivalent* node) override
+    {
+        InterpreterValue* left = executeNode(node->left.get());
+        InterpreterValue* right = executeNode(node->right.get());
+
+        Value leftValue = left->value;
+        Value rightValue = right->value;
+
+        TokenType tokenType = node->token->type;
+        
+        if (checkType<double, double>(leftValue, rightValue))
+        {
+            leftValue = EquivalentOp<double, double>(leftValue, rightValue, tokenType); 
+        }
+        
+        if (checkType<double, int>(leftValue, rightValue))
+        {
+            leftValue = EquivalentOp<double, int>(leftValue, rightValue, tokenType); 
+        }
+        
+        if (checkType<int, double>(leftValue, rightValue))
+        {
+            leftValue = EquivalentOp<int, double>(leftValue, rightValue, tokenType); 
+        }
+        
+        if (checkType<int, int>(leftValue, rightValue))
+        {
+            leftValue = EquivalentOp<int, int>(leftValue, rightValue, tokenType);    
+        }
+
+        if (checkType<char, char>(leftValue, rightValue))
+        {
+            leftValue = EquivalentOp<char, char>(leftValue, rightValue, tokenType);    
+        }
+
+        if (checkType<bool, bool>(leftValue, rightValue))
+        {
+            leftValue = EquivalentOp<bool, bool>(leftValue, rightValue, tokenType);    
+        }
+
+        left->value = leftValue;
+        delete right;
+        return left;
+    }
+
+    InterpreterValue* execute(Logical* node) override
+    {
+        TokenType tokenType = node->token->type;
+        InterpreterValue* temp = executeNode(node->left.get());
+        
+        if (tokenType == TokenType::AND)
+        {
+            if (!std::get<bool>(temp->value))
+            {
+                return temp;
+            }
+            else
+            {
+                delete temp;
+                return executeNode(node->right.get());
+            } 
+        } 
+        
+        if (tokenType == TokenType::OR)
+        {
+            if (std::get<bool>(temp->value))
+            {
+                return temp;
+            }
+            else
+            {
+                delete temp;
+                return executeNode(node->right.get());
+            } 
+        }
+
+        return nullptr; 
+    }
+    
+    InterpreterValue* executeNode(ASTnode* const node)
+    {
+        return dynamic_cast<InterpreterValue*>(node->execute(this));
+    }
+
+    template<typename L, typename R>
+    bool checkType(Value left, Value right)
+    {
+        return std::holds_alternative<L>(left) &&
+               std::holds_alternative<R>(right);
+    }
+    
     template<typename A, typename B, typename R>
     R arithmeticOp(Value a, Value b, TokenType type)
     {
@@ -116,57 +307,60 @@ class Interpreter : public AstnodeOperator
         {
             return std::get<A>(a) / std::get<B>(b);
         }
+        if (type == TokenType::PLUS)
+        {
+            return std::get<A>(a) + std::get<B>(b);
+        }
+        if (type == TokenType::MINUS)
+        {
+            return std::get<A>(a) - std::get<B>(b);
+        }
+        if (type == TokenType::PERCENT)
+        {
+            return std::get<int>(a) % std::get<int>(b);
+        }
 
         return R{};
     }
     
-    InterpreterValue* execute(Factor* node) override
+    template<typename A, typename B>
+    bool RelationalOp(Value a, Value b, TokenType type)
     {
-        InterpreterValue* left = executeNode(node->left.get());
-        InterpreterValue* right = executeNode(node->right.get());
-
-        TokenType tokenType = node->token->type;
-
-        if (std::holds_alternative<double>(left->value)
-            && std::holds_alternative<double>(right->value))
+        if (type == TokenType::LESS)
         {
-            left->value = arithmeticOp<double, double, double>(left->value,
-                                                           right->value,
-                                                           tokenType); 
+            return std::get<A>(a) < std::get<B>(b);
         }
-        if (std::holds_alternative<double>(left->value)
-            && std::holds_alternative<int>(right->value))
+        if (type == TokenType::GREAT)
         {
-            left->value = arithmeticOp<double, int, double>(left->value,
-                                                        right->value,
-                                                        tokenType); 
+            return std::get<A>(a) > std::get<B>(b);
         }
-        if (std::holds_alternative<int>(left->value)
-            && std::holds_alternative<double>(right->value))
+        if (type == TokenType::LESS_EQUAL)
         {
-            left->value = arithmeticOp<int, double, double>(left->value,
-                                                        right->value,
-                                                        tokenType); 
+            return std::get<A>(a) <= std::get<B>(b);
         }
-        if (std::holds_alternative<int>(left->value)
-            && std::holds_alternative<int>(right->value))
+        if (type == TokenType::GREAT_EQUAL)
         {
-            if (tokenType == TokenType::PERCENT)
-            {
-                left->value = std::get<int>(left->value) %
-                              std::get<int>(right->value);
-            }
-            else
-            {
-                left->value = arithmeticOp<int, int, int>(left->value,
-                                                          right->value,
-                                                          tokenType);    
-            } 
+            return std::get<A>(a) >= std::get<B>(b);
         }
 
-        delete right;
-        return left;
+        return false;
     }
+    
+    template<typename A, typename B>
+    bool EquivalentOp(Value a, Value b, TokenType type)
+    {
+        if (type == TokenType::EQUAL_EQUAL)
+        {
+            return std::get<A>(a) == std::get<B>(b);
+        }
+        if (type == TokenType::NOT_EQUAL)
+        {
+            return std::get<A>(a) != std::get<B>(b);
+        }
+
+        return false;
+    }
+    
 };
 
 #endif

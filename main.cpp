@@ -25,7 +25,7 @@ int main(int argc, char** args)
     if (scanner.hadError) return 0;
 
     Parser parser(tokens);
-    ASTnode* root = parser.parse();
+    Program* root = parser.parse();
 
     if (parser.hadError) return 0;
 

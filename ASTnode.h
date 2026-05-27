@@ -7,17 +7,6 @@
 
 class AstnodeOperator;
 
-enum class ASTnodeType
-{
-    INTEGER,
-    DOUBLE,
-    CHARACTER,
-    STRING,
-    BOOLEAN,
-    UNARY,
-    FACTOR,
-};
-
 enum class ExprType
 {
     INTEGER,
@@ -40,13 +29,12 @@ class ASTvalue
 class ASTnode
 {
     public:
-    ASTnodeType type;
     ExprType exprType;
     
     virtual ASTvalue* execute(AstnodeOperator* operation) = 0;
 
     protected:
-    ASTnode(ASTnodeType _type) : type(_type) {}
+    ASTnode() {}
 };
 
 class Integer;
@@ -56,6 +44,11 @@ class String;
 class Boolean;
 class Unary;
 class Factor;
+class Term;
+class Relational;
+class Equivalent;
+class Logical;
+class Program;
 
 class AstnodeOperator
 {
@@ -63,7 +56,7 @@ class AstnodeOperator
     AstnodeOperator(){}
 
     public:
-    virtual ASTvalue* execute(ASTnode* node);
+    virtual ASTvalue* execute(Program* node) = 0;
     virtual ASTvalue* execute(Integer* node) = 0;
     virtual ASTvalue* execute(Double* node) = 0;
     virtual ASTvalue* execute(Character* node) = 0;
@@ -71,6 +64,10 @@ class AstnodeOperator
     virtual ASTvalue* execute(Boolean* node) = 0;
     virtual ASTvalue* execute(Unary* node) = 0;
     virtual ASTvalue* execute(Factor* node) = 0;
+    virtual ASTvalue* execute(Term* node) = 0;
+    virtual ASTvalue* execute(Relational* node) = 0;
+    virtual ASTvalue* execute(Equivalent* node) = 0;
+    virtual ASTvalue* execute(Logical* node) = 0;
 };
 
 class Integer : public ASTnode
@@ -141,6 +138,59 @@ class Factor : public ASTnode
     Token* token;
 
     Factor(ASTnode* _left, ASTnode* _right, Token* _token);
+    ASTvalue* execute(AstnodeOperator* operation);
+};
+
+class Term : public ASTnode
+{
+    public:
+    std::unique_ptr<ASTnode> left;
+    std::unique_ptr<ASTnode> right;
+    Token* token;
+
+    Term(ASTnode* _left, ASTnode* _right, Token* _token);
+    ASTvalue* execute(AstnodeOperator* operation);
+};
+
+class Relational : public ASTnode
+{
+    public:
+    std::unique_ptr<ASTnode> left;
+    std::unique_ptr<ASTnode> right;
+    Token* token;
+
+    Relational(ASTnode* _left, ASTnode* _right, Token* _token);
+    ASTvalue* execute(AstnodeOperator* operation);
+};
+
+class Equivalent : public ASTnode
+{
+    public:
+    std::unique_ptr<ASTnode> left;
+    std::unique_ptr<ASTnode> right;
+    Token* token;
+
+    Equivalent(ASTnode* _left, ASTnode* _right, Token* _token);
+    ASTvalue* execute(AstnodeOperator* operation);
+};
+
+class Logical : public ASTnode
+{
+    public:
+    std::unique_ptr<ASTnode> left;
+    std::unique_ptr<ASTnode> right;
+    Token* token;
+
+    Logical(ASTnode* _left, ASTnode* _right, Token* _token);
+    ASTvalue* execute(AstnodeOperator* operation);
+};
+
+class Program : public ASTnode
+{
+    public:
+    std::unique_ptr<ASTnode> node;
+
+    Program(ASTnode* _node);
     ASTvalue* execute(AstnodeOperator* operation);
 };
 

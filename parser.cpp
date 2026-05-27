@@ -4,15 +4,15 @@
 
 Parser::Parser(std::vector<Token>& _tokens) : tokens{_tokens} {}
 
-ASTnode* Parser::parse()
+Program* Parser::parse()
 {
     try
     {
-        ASTnode* node = factor();
+        ASTnode* node = logical();
         consume(TokenType::END, "Unexpected symbol [line "
                                 + std::to_string(tokens[current].line)
                                 + "].");
-        return node;
+        return new Program(node);
     }
     catch(Error error)
     {
@@ -21,6 +21,63 @@ ASTnode* Parser::parse()
     }
 
     return nullptr;
+}
+
+ASTnode* Parser::logical()
+{
+    ASTnode* left = equivalent();
+
+    while(check(TokenType::AND, TokenType::OR))
+    {
+        Token* token = consume();
+        ASTnode* right = equivalent();
+        left = new Logical(left, right, token);
+    }
+    
+    return left;
+}
+
+ASTnode* Parser::equivalent()
+{
+    ASTnode* left = relational();
+
+    while(check(TokenType::EQUAL_EQUAL, TokenType::NOT_EQUAL))
+    {
+        Token* token = consume();
+        ASTnode* right = relational();
+        left = new Equivalent(left, right, token);
+    }
+    
+    return left;
+}
+
+ASTnode* Parser::relational()
+{
+    ASTnode* left = term();
+
+    while(check(TokenType::LESS, TokenType::GREAT)
+          || check(TokenType::LESS_EQUAL, TokenType::GREAT_EQUAL))
+    {
+        Token* token = consume();
+        ASTnode* right = term();
+        left = new Relational(left, right, token);
+    }
+    
+    return left;
+}
+
+ASTnode* Parser::term()
+{
+    ASTnode* left = factor();
+
+    while(check(TokenType::PLUS, TokenType::MINUS))
+    {
+        Token* token = consume();
+        ASTnode* right = factor();
+        left = new Term(left, right, token);
+    }
+    
+    return left;
 }
 
 ASTnode* Parser::factor()

@@ -15,8 +15,8 @@ bool Compiler::compile()
     return true;
 }
 
-CompilerValue* Compiler::execute(ASTnode* node)
+CompilerValue* Compiler::execute(Program* node)
 {
-    return dynamic_cast<CompilerValue*>(AstnodeOperator::execute(node));
+    return dynamic_cast<CompilerValue*>(node->node->execute(this));
 }
 

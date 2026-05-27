@@ -19,7 +19,7 @@ class Compiler : public AstnodeOperator
     int intSize;
     int doubleSize;
 
-    CompilerValue* execute(ASTnode* node) override;
+    CompilerValue* execute(Program* node) override;
 
     public:
     Compiler(ASTnode* _root, std::string& _code);
