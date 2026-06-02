@@ -6,8 +6,17 @@
 
 class TypeChecker : public AstnodeOperator
 {
+    struct StackValue
+    {
+        std::string name;
+        int scope;
+        ExprType Exprtype;    
+    };
+    
     public:
-      
+              
+    std::vector<StackValue> stack;
+    int currentScope = 0;
     bool hadError = false;
     TypeChecker() {}
 
@@ -82,9 +91,7 @@ class TypeChecker : public AstnodeOperator
             return nullptr;
         }
 
-        throw Error{"Operand type doesn't match with the operatoe [line "
-                    + std::to_string(node->token->line)
-                    + "]."};
+        throw Error{node->token, "Operand type doesn't match with the operator."};
     }
 
     ASTvalue* execute(Term* node) override
@@ -119,9 +126,7 @@ class TypeChecker : public AstnodeOperator
             return nullptr;
         }
         
-        throw Error{"Operand type doesn't match with the operator [line "
-                    + std::to_string(node->token->line)
-                    + "]."};
+        throw Error{node->token, "Operand type doesn't match with the operator."};
     }
 
     ASTvalue* execute(Factor* node) override
@@ -157,9 +162,7 @@ class TypeChecker : public AstnodeOperator
             return nullptr;
         }
         
-        throw Error{"Operand type doesn't match with the operator [line "
-                    + std::to_string(node->token->line)
-                    + "]."};
+        throw Error{node->token, "Operand type doesn't match with the operator."};
     }
     
     ASTvalue* execute(Relational* node) override
@@ -175,10 +178,8 @@ class TypeChecker : public AstnodeOperator
             node->exprType = ExprType::BOOLEAN;
             return nullptr;
         }
-        
-        throw Error{"Operand type doesn't match with the operator [line "
-                    + std::to_string(node->token->line)
-                    + "]."};
+
+        throw Error{node->token, "Operand type doesn't match with the operator."};
     }
 
     ASTvalue* execute(Equivalent* node) override
@@ -195,9 +196,7 @@ class TypeChecker : public AstnodeOperator
             return nullptr;
         }
         
-        throw Error{"Operand type doesn't match with the operator [line "
-                    + std::to_string(node->token->line)
-                    + "]."};
+        throw Error{node->token, "Operand type doesn't match with the operator."};
     }
     
     ASTvalue* execute(Logical* node) override
@@ -214,11 +213,105 @@ class TypeChecker : public AstnodeOperator
             return nullptr;
         }
         
-        throw Error{"Operand type doesn't match with the operator [line "
-                    + std::to_string(node->token->line)
-                    + "]."};
+        throw Error{node->token, "Operand type doesn't match with the operator."};
+    }
+
+    ExprType toExprType(TokenType type)
+    {
+        switch(type)
+        {
+            case TokenType::INT:
+                return ExprType::INTEGER;
+            case TokenType::CHAR: 
+                return ExprType::CHARACTER;
+            case TokenType::BOOL: 
+                return ExprType::BOOLEAN;
+            case TokenType::REAL: 
+                return ExprType::DOUBLE;
+            default:
+                break;
+        }
+        return ExprType::VOID;
     }
     
+    ASTvalue* execute(VarDecl* node) override
+    {
+        TokenType varType = node->dataType->type;
+        stack.push_back(StackValue{node->name, currentScope, toExprType(varType)});
+
+        if(node->expr == nullptr) return nullptr;
+        
+        node->expr->execute(this);
+        ExprType exprType = node->expr->exprType;
+        
+        if (varType == TokenType::INT && exprType == ExprType::INTEGER)
+        {
+            return nullptr;
+        }
+        if (varType == TokenType::REAL && exprType == ExprType::DOUBLE)
+        {
+            return nullptr;
+        }
+        if (varType == TokenType::CHAR && exprType == ExprType::CHARACTER)
+        {
+            return nullptr;
+        }
+        if (varType == TokenType::BOOL && exprType == ExprType::BOOLEAN)
+        {
+            return nullptr;
+        }
+        
+        throw Error{node->dataType, "Cannot initialize a value of incompatible type."};
+    }
+
+    ASTvalue* execute(SetVar* node) override
+    {
+        node->expr->execute(this);
+        
+        for (int i = stack.size() - 1; i >= 0; i--)
+        {
+            if (node->name == stack[i].name)
+            {
+                if (stack[i].Exprtype == node->expr->exprType) return nullptr;
+                throw Error{node->token, "Assigning a value of incompatible type."};
+            }
+        }
+
+        return nullptr;
+    }
+
+    ASTvalue* execute(StatementList* node) override
+    {
+        for(int i = 0; i < node->list.size(); i++)
+        {
+            node->list[i]->execute(this);    
+        }
+        
+        node->exprType = ExprType::VOID;
+        return nullptr;
+    }
+
+    ASTvalue* execute(PrintStmt* node) override
+    {
+        node->expr->execute(this);
+        node->exprType = ExprType::VOID;
+        return nullptr;
+    }
+    
+    ASTvalue* execute(Name* node) override
+    {          
+        for (int i = stack.size() - 1; i >= 0; i--)
+        {
+            if (node->name == stack[i].name)
+            {
+                node->exprType = stack[i].Exprtype;
+                return nullptr;
+            }
+        }
+
+        return nullptr;
+    }
+     
     bool checkType(ExprType left, ExprType leftExpected, ExprType right, ExprType rightExpected)
     {
         return left == leftExpected && right == rightExpected;

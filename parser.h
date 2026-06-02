@@ -19,6 +19,11 @@ class Parser
 
     Parser(std::vector<Token>& _tokens);
     Program* parse();
+    ASTnode* statementList();
+    ASTnode* statement();
+    ASTnode* varDeclaration();
+    ASTnode* setVar();
+    ASTnode* printStmt();
     ASTnode* logical();
     ASTnode* equivalent();
     ASTnode* relational();

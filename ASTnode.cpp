@@ -114,6 +114,7 @@ ASTvalue* Logical::execute(AstnodeOperator* operation)
 {
     return operation->execute(dynamic_cast<Logical*>(this));
 }
+
 Program::Program(ASTnode* _node) : node(_node)
 {
     
@@ -122,4 +123,56 @@ Program::Program(ASTnode* _node) : node(_node)
 ASTvalue* Program::execute(AstnodeOperator* operation)
 {
     return operation->execute(dynamic_cast<Program*>(this));
+}
+
+VarDecl::VarDecl(Token* _dataType, std::string _name, ASTnode* _expr, Token* _token) :
+                 dataType(_dataType), name(_name), expr(_expr), token(_token)
+{
+    
+}
+
+ASTvalue* VarDecl::execute(AstnodeOperator* operation)
+{
+    return operation->execute(dynamic_cast<VarDecl*>(this));
+}
+
+SetVar::SetVar(std::string _name, ASTnode* _expr, Token* _token)
+                : name(_name), expr(_expr), token(_token)
+{
+    
+}
+
+ASTvalue* SetVar::execute(AstnodeOperator* operation)
+{
+    return operation->execute(dynamic_cast<SetVar*>(this));
+}
+
+StatementList::StatementList()
+{
+    list.reserve(30);
+}
+
+ASTvalue* StatementList::execute(AstnodeOperator* operation)
+{
+    return operation->execute(dynamic_cast<StatementList*>(this));
+}
+
+Name::Name(std::string _name, Token* _token) :  name(_name), token(_token)
+{
+    
+}
+
+ASTvalue* Name::execute(AstnodeOperator* operation)
+{
+    return operation->execute(dynamic_cast<Name*>(this));
+}
+
+PrintStmt::PrintStmt(ASTnode* _expr) : expr(_expr)
+{
+    
+}
+
+ASTvalue* PrintStmt::execute(AstnodeOperator* operation)
+{
+    return operation->execute(dynamic_cast<PrintStmt*>(this));
 }

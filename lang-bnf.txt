@@ -63,6 +63,8 @@ block -> lb stmtlist rb;
 stmtlist -> stmt stmtlist;
 stmtlist -> ;
 
+stmt -> print logic semi;
+
 stmt -> vardecl;
 stmt -> logic semi;
 stmt -> set iden equal logic semi;

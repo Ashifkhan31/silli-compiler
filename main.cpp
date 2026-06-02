@@ -3,6 +3,7 @@
 
 #include "scanner.h"
 #include "parser.h"
+#include "resolver.h"
 #include "typechecker.h"
 #include "interpreter.h"
 
@@ -25,18 +26,22 @@ int main(int argc, char** args)
     if (scanner.hadError) return 0;
 
     Parser parser(tokens);
-    Program* root = parser.parse();
+    std::unique_ptr<Program> root{parser.parse()};
 
     if (parser.hadError) return 0;
 
+    Resolver resolver{};
+    resolver.execute(root.get());
+
+    if (resolver.hadError) return 0;
+
     TypeChecker typeChecker{};
-    typeChecker.execute(root);
+    typeChecker.execute(root.get());
 
     if (typeChecker.hadError) return 0;
 
     Interpreter interpreter{};
-    InterpreterValue* value = interpreter.execute(root);
-    value->print();
+    InterpreterValue* value = interpreter.execute(root.get());
 
     return 0;
 }

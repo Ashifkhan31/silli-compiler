@@ -37,6 +37,7 @@ class ASTnode
     ASTnode() {}
 };
 
+class Name;
 class Integer;
 class Double;
 class Character;
@@ -48,6 +49,10 @@ class Term;
 class Relational;
 class Equivalent;
 class Logical;
+class VarDecl;
+class SetVar;
+class PrintStmt;
+class StatementList;
 class Program;
 
 class AstnodeOperator
@@ -68,6 +73,11 @@ class AstnodeOperator
     virtual ASTvalue* execute(Relational* node) = 0;
     virtual ASTvalue* execute(Equivalent* node) = 0;
     virtual ASTvalue* execute(Logical* node) = 0;
+    virtual ASTvalue* execute(VarDecl* node) = 0;
+    virtual ASTvalue* execute(SetVar* node) = 0;
+    virtual ASTvalue* execute(PrintStmt* node) = 0;
+    virtual ASTvalue* execute(StatementList* node) = 0;
+    virtual ASTvalue* execute(Name* node) = 0;
 };
 
 class Integer : public ASTnode
@@ -191,6 +201,57 @@ class Program : public ASTnode
     std::unique_ptr<ASTnode> node;
 
     Program(ASTnode* _node);
+    ASTvalue* execute(AstnodeOperator* operation);
+};
+
+class VarDecl : public ASTnode
+{
+    public:
+    Token* dataType;
+    std::string name;
+    Token* token;
+    std::unique_ptr<ASTnode> expr;
+
+    VarDecl(Token* _dataType, std::string _name, ASTnode* _expr, Token* _token);
+    ASTvalue* execute(AstnodeOperator* operation);
+};
+
+class SetVar : public ASTnode
+{
+    public:
+    std::string name;
+    std::unique_ptr<ASTnode> expr;
+    Token* token;
+
+    SetVar(std::string _name, ASTnode* _expr, Token* _token);
+    ASTvalue* execute(AstnodeOperator* operation);
+};
+
+class StatementList : public ASTnode
+{
+    public:
+    std::vector<std::unique_ptr<ASTnode>> list;
+
+    StatementList();
+    ASTvalue* execute(AstnodeOperator* operation);
+};
+
+class Name : public ASTnode
+{
+    public:
+    std::string name;
+    Token* token;
+    
+    Name(std::string _name, Token* _token);
+    ASTvalue* execute(AstnodeOperator* operation);
+};
+
+class PrintStmt : public ASTnode
+{
+    public:
+    std::unique_ptr<ASTnode> expr;
+
+    PrintStmt(ASTnode* _expr);
     ASTvalue* execute(AstnodeOperator* operation);
 };
 

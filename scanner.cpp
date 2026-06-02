@@ -157,6 +157,12 @@ bool Scanner::isKeyword(TokenType& type)
                 type = TokenType::OR;
                 return true;
             }            
+        case 'p':
+            if (checkKeyword("rint", 1, 4))
+            {
+                type = TokenType::PRINT;
+                return true;
+            }            
         case 'c':
             if (checkKeyword("har", 1, 3))
             {
