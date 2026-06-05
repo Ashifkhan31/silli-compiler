@@ -31,20 +31,22 @@ class Interpreter : public AstnodeOperator
     std::vector<StackValue> stack;
     int currentScope = 0;
 
-    Value& getValue(std::string name)
+    int getIndex(std::string name)
     {
         for (int i = stack.size() - 1; i >= 0; i--)
         {
             if(name == stack[i].name)
             {
-                return stack[i].value;
+                return i;
             }
         }
+        return 0;
     }
     
     InterpreterValue* execute(Name* node) override
     {
-        return new InterpreterValue{getValue(node->name)};   
+        Value value = stack[getIndex(node->name)].value;
+        return new InterpreterValue{value};   
     }
     
     InterpreterValue* execute(Program* node) override
@@ -345,7 +347,7 @@ class Interpreter : public AstnodeOperator
     InterpreterValue* execute(SetVar* node) override
     {
         InterpreterValue* value = executeNode(node->expr.get());
-        getValue(node->name) = value->value;
+        stack[getIndex(node->name)].value = value->value;
         delete value;
         return nullptr;   
     }
@@ -382,6 +384,106 @@ class Interpreter : public AstnodeOperator
             node->list[i]->execute(this);
         }
 
+        return nullptr;
+    }
+    
+    void beginScope()
+    {        
+        currentScope++;
+    }
+
+    void endScope()
+    {        
+        currentScope--;
+        while (!stack.empty())
+        {
+            if (stack.back().scope <= currentScope) break;
+            stack.pop_back();
+        }
+    }
+    
+    virtual ASTvalue* execute(BlockStatement* node) override
+    {
+        beginScope();
+        node->stmtList->execute(this);
+        endScope();        
+        return nullptr;
+    }
+     
+    virtual ASTvalue* execute(IfStatement* node) override
+    {
+        InterpreterValue* value = executeNode(node->condition.get());
+
+        if (std::get<bool>(value->value))
+        {
+            node->block->execute(this);
+        }
+        else if (node->tail)
+        {
+            node->tail->execute(this);
+        }
+        
+        delete value;
+        return nullptr;
+    }
+
+    virtual ASTvalue* execute(ElifStatement* node) override
+    {
+        InterpreterValue* value = executeNode(node->condition.get());
+
+        if (std::get<bool>(value->value))
+        {
+            node->block->execute(this);
+        }
+        else if (node->tail)
+        {
+            node->tail->execute(this);
+        }
+        
+        delete value;
+        return nullptr;
+    }
+
+    virtual ASTvalue* execute(WhileStatement* node) override
+    {
+        while(true)
+        {
+            std::unique_ptr<InterpreterValue> value{executeNode(node->condition.get())};
+            if (!std::get<bool>(value->value)) break;
+
+            node->block->execute(this);
+        }        
+        return nullptr;
+    }
+
+    virtual ASTvalue* execute(ForStatement* node) override
+    {
+        beginScope();
+
+        delete executeNode(node->initializer.get());
+
+        while(true && node->condition == nullptr)
+        {
+            node->block->execute(this);
+            delete executeNode(node->updator.get());
+        }
+        
+        while(true && node->condition)
+        {
+            std::unique_ptr<InterpreterValue> value{executeNode(node->condition.get())};
+            if (!std::get<bool>(value->value)) break;
+            
+            node->block->execute(this);
+            delete executeNode(node->updator.get());
+        }
+        
+        endScope();        
+        return nullptr;
+    }
+
+    virtual ASTvalue* execute(ElseStatement* node) override
+    {
+        node->block->execute(this);
         return nullptr;
     }
     

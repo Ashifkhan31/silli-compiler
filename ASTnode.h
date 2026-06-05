@@ -52,6 +52,12 @@ class Logical;
 class VarDecl;
 class SetVar;
 class PrintStmt;
+class BlockStatement;
+class IfStatement;
+class ElifStatement;
+class ElseStatement;
+class WhileStatement;
+class ForStatement;
 class StatementList;
 class Program;
 
@@ -77,6 +83,12 @@ class AstnodeOperator
     virtual ASTvalue* execute(SetVar* node) = 0;
     virtual ASTvalue* execute(PrintStmt* node) = 0;
     virtual ASTvalue* execute(StatementList* node) = 0;
+    virtual ASTvalue* execute(IfStatement* node) = 0;
+    virtual ASTvalue* execute(ElseStatement* node) = 0;
+    virtual ASTvalue* execute(ElifStatement* node) = 0;
+    virtual ASTvalue* execute(WhileStatement* node) = 0;
+    virtual ASTvalue* execute(ForStatement* node) = 0;
+    virtual ASTvalue* execute(BlockStatement* node) = 0;
     virtual ASTvalue* execute(Name* node) = 0;
 };
 
@@ -236,6 +248,15 @@ class StatementList : public ASTnode
     ASTvalue* execute(AstnodeOperator* operation);
 };
 
+class BlockStatement : public ASTnode
+{
+    public:
+    std::unique_ptr<ASTnode> stmtList;
+
+    BlockStatement(ASTnode* _stmtList);
+    ASTvalue* execute(AstnodeOperator* operation);
+};
+
 class Name : public ASTnode
 {
     public:
@@ -252,6 +273,66 @@ class PrintStmt : public ASTnode
     std::unique_ptr<ASTnode> expr;
 
     PrintStmt(ASTnode* _expr);
+    ASTvalue* execute(AstnodeOperator* operation);
+};
+
+class IfStatement : public ASTnode
+{
+    public:
+    std::unique_ptr<ASTnode> condition;
+    std::unique_ptr<ASTnode> block;
+    std::unique_ptr<ASTnode> tail;
+    Token* token;
+
+    IfStatement(ASTnode* _condition, ASTnode* _block, ASTnode* _tail, Token* _token);
+    ASTvalue* execute(AstnodeOperator* operation);
+};
+
+class ElifStatement : public ASTnode
+{
+    public:
+    std::unique_ptr<ASTnode> condition;
+    std::unique_ptr<ASTnode> block;
+    std::unique_ptr<ASTnode> tail;
+    Token* token;
+
+    ElifStatement(ASTnode* _condition, ASTnode* _block, ASTnode* _tail, Token* _token);
+    ASTvalue* execute(AstnodeOperator* operation);
+};
+
+class ElseStatement : public ASTnode
+{
+    public:
+    std::unique_ptr<ASTnode> block;
+    Token* token;
+
+    ElseStatement(ASTnode* _block, Token* _token);
+    ASTvalue* execute(AstnodeOperator* operation);
+};
+
+class WhileStatement : public ASTnode
+{
+    public:
+    std::unique_ptr<ASTnode> condition;
+    std::unique_ptr<ASTnode> block;
+    Token* token;
+
+    WhileStatement(ASTnode* _condition, ASTnode* _block, Token* _token);
+    ASTvalue* execute(AstnodeOperator* operation);
+};
+
+class ForStatement : public ASTnode
+{
+    public:
+    std::unique_ptr<ASTnode> initializer;
+    std::unique_ptr<ASTnode> condition;
+    std::unique_ptr<ASTnode> updator;
+    std::unique_ptr<ASTnode> block;
+    Token* token;
+
+    ForStatement(ASTnode* _initialzer, ASTnode* _condition ,ASTnode* _updator,
+                 ASTnode* _block, Token* _token);
+    
     ASTvalue* execute(AstnodeOperator* operation);
 };
 

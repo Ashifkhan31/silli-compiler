@@ -176,3 +176,71 @@ ASTvalue* PrintStmt::execute(AstnodeOperator* operation)
 {
     return operation->execute(dynamic_cast<PrintStmt*>(this));
 }
+
+BlockStatement::BlockStatement(ASTnode* _stmtList) : stmtList(_stmtList)
+{
+    
+}
+
+ASTvalue* BlockStatement::execute(AstnodeOperator* operation)
+{
+    return operation->execute(dynamic_cast<BlockStatement*>(this));
+}
+
+IfStatement::IfStatement(ASTnode* _condition, ASTnode* _block, ASTnode* _tail, Token* _token)
+                        : condition(_condition), block(_block), tail(_tail) , token(_token) 
+{
+    
+}
+
+ASTvalue* IfStatement::execute(AstnodeOperator* operation)
+{
+    return operation->execute(dynamic_cast<IfStatement*>(this));
+}
+
+ElifStatement::ElifStatement(ASTnode* _condition, ASTnode* _block, ASTnode* _tail, Token* _token)
+                        : condition(_condition), block(_block), tail(_tail) , token(_token) 
+{
+    
+}
+
+ASTvalue* ElifStatement::execute(AstnodeOperator* operation)
+{
+    return operation->execute(dynamic_cast<ElifStatement*>(this));
+}
+
+ElseStatement::ElseStatement(ASTnode* _block, Token* _token) : block(_block), token(_token) 
+{
+    
+}
+
+ASTvalue* ElseStatement::execute(AstnodeOperator* operation)
+{
+    return operation->execute(dynamic_cast<ElseStatement*>(this));
+}
+
+WhileStatement::WhileStatement(ASTnode* _condition, ASTnode* _block, Token* _token)
+                        : condition(_condition), block(_block), token(_token) 
+{
+    
+}
+
+ASTvalue* WhileStatement::execute(AstnodeOperator* operation)
+{
+    return operation->execute(dynamic_cast<WhileStatement*>(this));
+}
+
+ForStatement::ForStatement(ASTnode* _initializer, ASTnode* _condition, ASTnode* _updator,
+                           ASTnode* _block, Token* _token)
+
+                        : initializer(_initializer), condition(_condition), updator(_updator),
+                          block(_block), token(_token) 
+{
+    
+}
+
+ASTvalue* ForStatement::execute(AstnodeOperator* operation)
+{
+    return operation->execute(dynamic_cast<ForStatement*>(this));
+}
+

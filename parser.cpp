@@ -28,6 +28,8 @@ ASTnode* Parser::statementList()
     while(!isAtEnd())
     {
         std::unique_ptr<ASTnode> node{statement()};
+
+        if (node == nullptr) break;
         stmts->list.push_back(std::move(node));
     }
 
@@ -38,28 +40,163 @@ ASTnode* Parser::statement()
 {
     if (check(TokenType::INT, TokenType::REAL) || check(TokenType::BOOL, TokenType::CHAR))
     {
-        return varDeclaration();
+        ASTnode* node = varDeclaration();
+        consume(TokenType::SEMI_COLON, "Expected ';' after statement.");
+        return node;
     }
 
     if (check(TokenType::SET))
     {
-        return setVar();
+        ASTnode* node = setVar();
+        consume(TokenType::SEMI_COLON, "Expected ';' after statement.");
+        return node;
     }
 
     if (check(TokenType::PRINT))
     {
-        return printStmt();
+        ASTnode* node = printStmt();
+        consume(TokenType::SEMI_COLON, "Expected ';' after statement.");
+        return node;
     }
 
-    return logical();
+    if (check(TokenType::IF))
+    {
+        return ifStatement();    
+    }
+
+    if (check(TokenType::WHILE))
+    {
+        return whileStatement();    
+    }
+    
+    if (check(TokenType::FOR))
+    {
+        return forStatement();    
+    }
+    
+    return nullptr;
 }
 
-ASTnode* Parser::printStmt()
+ASTnode* Parser::parseCondition()
 {
-    consume();
-    ASTnode* node = logical();
-    consume(TokenType::SEMI_COLON, "Expected ';' after statement.");
-    return new PrintStmt{node};
+    consume(TokenType::LEFT_PAREN, "Expect '(' before the condition.");
+    ASTnode* condition = logical();
+    consume(TokenType::RIGHT_PAREN, "Expect ')' after the condition.");
+    return condition;
+}
+
+ASTnode* Parser::parseInitializer()
+{
+    ASTnode* node = nullptr;;
+
+    if (check(TokenType::INT, TokenType::REAL) || check(TokenType::BOOL, TokenType::CHAR))
+    {
+        node = varDeclaration();
+    }
+
+    if (check(TokenType::SET))
+    {
+        node = setVar();
+    }
+
+    if (!check(TokenType::SEMI_COLON))
+    {
+        node = logical();
+    }
+    
+    return node;
+}
+
+ASTnode* Parser::parseUpdater()
+{
+    ASTnode* node = nullptr;;
+
+    if (check(TokenType::SET))
+    {
+        node = setVar();
+    }
+
+    if (!check(TokenType::RIGHT_PAREN))
+    {
+        node = logical();
+    }
+
+    return node;
+}
+
+ASTnode* Parser::forStatement()
+{
+    Token* token = consume();
+    consume(TokenType::LEFT_PAREN, "Expected '(' before the clause");
+
+    ASTnode* initializer = parseInitializer();
+    consume(TokenType::SEMI_COLON, "Expected ';'.");
+
+    ASTnode* condition = check(TokenType::SEMI_COLON) ? nullptr : logical();
+    consume(TokenType::SEMI_COLON, "Expected ';'.");
+
+    ASTnode* updater = parseUpdater();
+
+    consume(TokenType::RIGHT_PAREN, "Expected ')' before the loop body");
+    ASTnode* body = block();
+    return new ForStatement{initializer, condition, updater, body, token};
+}
+
+ASTnode* Parser::whileStatement()
+{
+    Token* token = consume();
+    ASTnode* condition = parseCondition();
+    ASTnode* body = block();
+    return new WhileStatement{condition, body, token};
+}
+
+ASTnode* Parser::ifTail()
+{
+    ASTnode* tail = nullptr;
+
+    if (check(TokenType::ELSE))
+    {
+        tail = elseStatement();
+    }
+
+    if (check(TokenType::ELIF))
+    {
+        tail = elifStatement();
+    }
+
+    return tail;
+}
+
+ASTnode* Parser::ifStatement()
+{
+    Token* token = consume();
+    ASTnode* condition = parseCondition();
+    ASTnode* ifBody = block();
+    ASTnode* tail = ifTail();
+    return new IfStatement{condition, ifBody, tail, token};
+} 
+
+ASTnode* Parser::elifStatement()
+{
+    Token* token = consume();
+    ASTnode* condition = parseCondition();
+    ASTnode* body = block();
+    ASTnode* tail = ifTail();
+    return new ElifStatement{condition, body, tail, token};
+}
+
+ASTnode* Parser::elseStatement()
+{
+    Token* token = consume();
+    return new ElseStatement{block(), token};
+}
+
+ASTnode* Parser::block()
+{
+    consume(TokenType::LEFT_BRACE, "Expect '{'.");
+    ASTnode* node = statementList();
+    consume(TokenType::RIGHT_BRACE, "Expect '}' at the end.");
+    return new BlockStatement{node};
 }
 
 ASTnode* Parser::varDeclaration()
@@ -74,8 +211,6 @@ ASTnode* Parser::varDeclaration()
         expr = logical();
     }
 
-    consume(TokenType::SEMI_COLON, "Expected ';' after statement.");
-
     std::string str{name->start, name->length};
     return new VarDecl(dataType, str, expr, name);
 }
@@ -86,10 +221,16 @@ ASTnode* Parser::setVar()
     Token* name = consume(TokenType::IDENTIFIER, "Expect name in assigment.");
     consume(TokenType::EQUAL, "Expected '=' after name.");
     ASTnode* expr = logical();
-    consume(TokenType::SEMI_COLON, "Expected ';' after statement.");
 
     std::string str{name->start, name->length};
     return new SetVar(str, expr, name);
+}
+
+ASTnode* Parser::printStmt()
+{
+    consume();
+    ASTnode* node = logical();
+    return new PrintStmt{node};
 }
 
 ASTnode* Parser::logical()
@@ -198,12 +339,12 @@ ASTnode* Parser::primary()
         return new Character(c, token);
     }
 
-    if (check(TokenType::STRING))
-    {
-        Token* token = consume();
-        std::string str{token->start + 1, token->length - 2};
-        return new String(str, token);
-    }
+    // if (check(TokenType::STRING))
+    // {
+    //     Token* token = consume();
+    //     std::string str{token->start + 1, token->length - 2};
+    //     return new String(str, token);
+    // }
 
     if (check(TokenType::TRUE, TokenType::FALSE))
     {

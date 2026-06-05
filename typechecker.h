@@ -311,7 +311,102 @@ class TypeChecker : public AstnodeOperator
 
         return nullptr;
     }
+
+    void beginScope()
+    {        
+        currentScope++;
+    }
+
+    void endScope()
+    {        
+        currentScope--;
+        while (!stack.empty())
+        {
+            if (stack.back().scope <= currentScope) break;
+            stack.pop_back();
+        }
+    }
+    
+    virtual ASTvalue* execute(BlockStatement* node) override
+    {
+        beginScope();
+        node->stmtList->execute(this);
+        endScope();
+        
+        node->exprType = ExprType::VOID;
+        return nullptr;
+    }
      
+    virtual ASTvalue* execute(IfStatement* node) override 
+    {
+        node->exprType = ExprType::VOID;
+        node->condition->execute(this);
+
+        if (node->condition->exprType != ExprType::BOOLEAN)
+        {
+            throw Error{node->token, "Expected a boolean expression inside the condition."};
+        }
+        
+        node->block->execute(this);
+        return nullptr;
+    }
+    
+    virtual ASTvalue* execute(ElifStatement* node) override 
+    {
+        node->exprType = ExprType::VOID;
+        node->condition->execute(this);
+
+        if (node->condition->exprType != ExprType::BOOLEAN)
+        {
+            throw Error{node->token, "Expected a boolean expression inside the condition."};
+        }
+        
+        node->block->execute(this);
+        if (node->tail) node->tail->execute(this);
+        
+        return nullptr;
+    }
+
+    virtual ASTvalue* execute(ElseStatement* node) override 
+    {
+        node->exprType = ExprType::VOID;
+        node->block->execute(this);
+        return nullptr;
+    }
+
+    virtual ASTvalue* execute(WhileStatement* node) override 
+    {
+        node->exprType = ExprType::VOID;
+        node->condition->execute(this);
+
+        if (node->condition->exprType != ExprType::BOOLEAN)
+        {
+            throw Error{node->token, "Expected a boolean expression inside the condition."};
+        }
+        
+        node->block->execute(this);
+       
+        return nullptr;
+    }
+
+    virtual ASTvalue* execute(ForStatement* node) override
+    {
+        beginScope();        
+        if (node->initializer) node->initializer->execute(this);
+        if (node->condition) node->condition->execute(this);
+        if (node->updator) node->updator->execute(this);
+        node->block->execute(this);
+        endScope();
+
+        if (node->condition && node->condition->exprType != ExprType::BOOLEAN)
+        {
+            throw Error{node->token, "Expected a boolean expression inside the condition."};
+        }
+        
+        node->exprType = ExprType::VOID;
+        return nullptr;
+    }
+
     bool checkType(ExprType left, ExprType leftExpected, ExprType right, ExprType rightExpected)
     {
         return left == leftExpected && right == rightExpected;

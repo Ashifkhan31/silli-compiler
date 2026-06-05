@@ -140,6 +140,71 @@ class Resolver : public AstnodeOperator
 
         throw Error{node->token, "Reference to undefined variable."};    
     }
+
+    void beginScope()
+    {        
+        currentScope++;
+    }
+
+    void endScope()
+    {        
+        currentScope--;
+        while (!stack.empty())
+        {
+            if (stack.back().scope <= currentScope) break;
+            stack.pop_back();
+        }
+    }
+    
+    virtual ASTvalue* execute(BlockStatement* node) 
+    {
+        beginScope();
+        node->stmtList->execute(this);
+        endScope();
+        return nullptr;
+    }
+    
+    virtual ASTvalue* execute(IfStatement* node) 
+    {
+        node->condition->execute(this);
+        node->block->execute(this);
+        if (node->tail) node->tail->execute(this);
+        return nullptr;
+    }
+
+    virtual ASTvalue* execute(ElifStatement* node) 
+    {
+        node->condition->execute(this);
+        node->block->execute(this);
+        if (node->tail) node->tail->execute(this);
+        return nullptr;
+    }
+
+    virtual ASTvalue* execute(ElseStatement* node) 
+    {
+        node->block->execute(this);
+        return nullptr;
+    }
+    
+    virtual ASTvalue* execute(WhileStatement* node) 
+    {
+        node->condition->execute(this);
+        node->block->execute(this);
+        return nullptr;
+    }
+
+    virtual ASTvalue* execute(ForStatement* node) 
+    {
+        beginScope();
+                
+        if (node->initializer) node->initializer->execute(this);
+        if (node->condition) node->condition->execute(this);
+        if (node->updator) node->updator->execute(this);
+        node->block->execute(this);
+
+        endScope();
+        return nullptr;
+    }
 };
 
 #endif

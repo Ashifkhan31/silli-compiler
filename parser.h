@@ -14,6 +14,10 @@ class Parser
     Token* consume();
     Token* consume(TokenType a, std::string message);
     bool isAtEnd();
+    ASTnode* parseInitializer();
+    ASTnode* parseCondition();
+    ASTnode* parseUpdater();
+    ASTnode* ifTail();
     
     public:
 
@@ -24,6 +28,12 @@ class Parser
     ASTnode* varDeclaration();
     ASTnode* setVar();
     ASTnode* printStmt();
+    ASTnode* ifStatement();
+    ASTnode* elifStatement();
+    ASTnode* elseStatement();
+    ASTnode* whileStatement();
+    ASTnode* forStatement();
+    ASTnode* block();
     ASTnode* logical();
     ASTnode* equivalent();
     ASTnode* relational();
