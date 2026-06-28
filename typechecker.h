@@ -3,6 +3,7 @@
 
 #include "ASTnode.h"
 #include "common.h"
+#include "typeclass.h"
 
 class TypeChecker : public AstnodeOperator
 {
@@ -10,7 +11,7 @@ class TypeChecker : public AstnodeOperator
     {
         std::string name;
         int scope;
-        ExprType Exprtype;    
+        std::unique_ptr<TypeClass> typeClass;    
     };
     
     public:
@@ -26,7 +27,7 @@ class TypeChecker : public AstnodeOperator
         try
         {
             node->node->execute(this);
-            node->exprType = ExprType::VOID;
+            node->typeClass = std::make_unique<VoidType>();
         }
         catch(Error error)
         {
@@ -39,31 +40,25 @@ class TypeChecker : public AstnodeOperator
     
     ASTvalue* execute(Integer* node) override
     {
-        node->exprType = ExprType::INTEGER;
+        node->typeClass = std::make_unique<IntegerType>();
         return nullptr;
     }
     
     ASTvalue* execute(Double* node) override
     {
-        node->exprType = ExprType::DOUBLE;
+        node->typeClass = std::make_unique<DoubleType>();
         return nullptr;
     }
     
     ASTvalue* execute(Character* node) override
     {
-        node->exprType = ExprType::CHARACTER;
+        node->typeClass = std::make_unique<CharacterType>();
         return nullptr;
     }
-    
-    ASTvalue* execute(String* node) override
-    {
-        node->exprType = ExprType::STRING;
-        return nullptr;
-    }
-    
+       
     ASTvalue* execute(Boolean* node) override
     {
-        node->exprType = ExprType::BOOLEAN;
+        node->typeClass = std::make_unique<BooleanType>();
         return nullptr;
     }    
     
@@ -73,21 +68,21 @@ class TypeChecker : public AstnodeOperator
         child->execute(this);
         TokenType tokenType = node->token->type;
         
-        if (tokenType == TokenType::MINUS && child->exprType == ExprType::INTEGER)
+        if (tokenType == TokenType::MINUS && isType(child->typeClass, Type::INTEGER))
         {
-            node->exprType = ExprType::INTEGER;
+            node->typeClass = std::make_unique<IntegerType>();
             return nullptr;
         }
         
-        if (tokenType == TokenType::MINUS && child->exprType == ExprType::DOUBLE)
+        if (tokenType == TokenType::MINUS && isType(child->typeClass, Type::DOUBLE))
         {
-            node->exprType = ExprType::DOUBLE;
+            node->typeClass = std::make_unique<DoubleType>();
             return nullptr;
         }
         
-        if (tokenType == TokenType::NOT && child->exprType == ExprType::BOOLEAN)
+        if (tokenType == TokenType::NOT && isType(child->typeClass, Type::BOOLEAN))
         {
-            node->exprType = ExprType::BOOLEAN;
+            node->typeClass = std::make_unique<BooleanType>();
             return nullptr;
         }
 
@@ -99,30 +94,30 @@ class TypeChecker : public AstnodeOperator
         node->left->execute(this);
         node->right->execute(this);
 
-        ExprType leftType = node->left->exprType;
-        ExprType rightType = node->right->exprType;
+        Type leftType = node->left->typeClass->baseType;
+        Type rightType = node->right->typeClass->baseType;
 
-        if (leftType == ExprType::DOUBLE && rightType == ExprType::DOUBLE)
+        if (leftType == Type::DOUBLE && rightType == Type::DOUBLE)
         {
-            node->exprType = ExprType::DOUBLE;          
+            node->typeClass = std::make_unique<DoubleType>();          
             return nullptr;
         }
         
-        if (leftType == ExprType::DOUBLE && rightType == ExprType::INTEGER)
+        if (leftType == Type::DOUBLE && rightType == Type::INTEGER)
         {
-            node->exprType = ExprType::DOUBLE;          
+            node->typeClass = std::make_unique<DoubleType>();          
             return nullptr;
         }
         
-        if (leftType == ExprType::INTEGER && rightType == ExprType::DOUBLE)
+        if (leftType == Type::INTEGER && rightType == Type::DOUBLE)
         {
-            node->exprType = ExprType::DOUBLE;          
+            node->typeClass = std::make_unique<DoubleType>();          
             return nullptr;
         }
         
-        if (leftType == ExprType::INTEGER && rightType == ExprType::INTEGER)
+        if (leftType == Type::INTEGER && rightType == Type::INTEGER)
         {
-            node->exprType = ExprType::INTEGER;          
+            node->typeClass = std::make_unique<IntegerType>();          
             return nullptr;
         }
         
@@ -134,31 +129,31 @@ class TypeChecker : public AstnodeOperator
         node->left->execute(this);
         node->right->execute(this);
 
-        ExprType leftType = node->left->exprType;
-        ExprType rightType = node->right->exprType;
+        Type leftType = node->left->typeClass->baseType;
+        Type rightType = node->right->typeClass->baseType;
         bool isPercent = node->token->type == TokenType::PERCENT;
 
-        if (leftType == ExprType::DOUBLE && rightType == ExprType::DOUBLE && !isPercent)
+        if (leftType == Type::DOUBLE && rightType == Type::DOUBLE && !isPercent)
         {
-            node->exprType = ExprType::DOUBLE;          
+            node->typeClass = std::make_unique<DoubleType>();          
             return nullptr;
         }
         
-        if (leftType == ExprType::DOUBLE && rightType == ExprType::INTEGER && !isPercent)
+        if (leftType == Type::DOUBLE && rightType == Type::INTEGER && !isPercent)
         {
-            node->exprType = ExprType::DOUBLE;          
+            node->typeClass = std::make_unique<DoubleType>();          
             return nullptr;
         }
         
-        if (leftType == ExprType::INTEGER && rightType == ExprType::DOUBLE && !isPercent)
+        if (leftType == Type::INTEGER && rightType == Type::DOUBLE && !isPercent)
         {
-            node->exprType = ExprType::DOUBLE;          
+            node->typeClass = std::make_unique<DoubleType>();          
             return nullptr;
         }
         
-        if (leftType == ExprType::INTEGER && rightType == ExprType::INTEGER)
+        if (leftType == Type::INTEGER && rightType == Type::INTEGER)
         {
-            node->exprType = ExprType::INTEGER;          
+            node->typeClass = std::make_unique<IntegerType>();          
             return nullptr;
         }
         
@@ -170,12 +165,12 @@ class TypeChecker : public AstnodeOperator
         node->left->execute(this);
         node->right->execute(this);
 
-        ExprType leftType = node->left->exprType;
-        ExprType rightType = node->right->exprType;
+        Type leftType = node->left->typeClass->baseType;
+        Type rightType = node->right->typeClass->baseType;
 
         if(isNumberType(leftType) && isNumberType(rightType))
         {
-            node->exprType = ExprType::BOOLEAN;
+            node->typeClass = std::make_unique<BooleanType>();
             return nullptr;
         }
 
@@ -187,12 +182,12 @@ class TypeChecker : public AstnodeOperator
         node->left->execute(this);
         node->right->execute(this);
 
-        ExprType left = node->left->exprType;
-        ExprType right = node->right->exprType;
+        Type left = node->left->typeClass->baseType;
+        Type right = node->right->typeClass->baseType;
 
-        if(isCompatible(left, right) && isComparable(left) && isComparable(right))
+        if(isComparable(left, right))
         {
-            node->exprType = ExprType::BOOLEAN;
+            node->typeClass = std::make_unique<BooleanType>();
             return nullptr;
         }
         
@@ -204,75 +199,83 @@ class TypeChecker : public AstnodeOperator
         node->left->execute(this);
         node->right->execute(this);
 
-        ExprType left = node->left->exprType;
-        ExprType right = node->right->exprType;
+        Type left = node->left->typeClass->baseType;
+        Type right = node->right->typeClass->baseType;
 
-        if(checkType(left, ExprType::BOOLEAN, right, ExprType::BOOLEAN))
+        if(checkType(left, Type::BOOLEAN, right, Type::BOOLEAN))
         {
-            node->exprType = ExprType::BOOLEAN;
+            node->typeClass = std::make_unique<BooleanType>();
             return nullptr;
         }
         
         throw Error{node->token, "Operand type doesn't match with the operator."};
     }
 
-    ExprType toExprType(TokenType type)
+    std::unique_ptr<TypeClass> copyTypeClass(std::unique_ptr<TypeClass>& typeClass)
     {
-        switch(type)
+        switch (typeClass->baseType)
+        {
+            case Type::INTEGER:
+                return std::make_unique<IntegerType>();
+            case Type::DOUBLE:
+                return std::make_unique<DoubleType>();
+            case Type::BOOLEAN:
+                return std::make_unique<BooleanType>();
+            case Type::CHARACTER:
+                return std::make_unique<CharacterType>();
+            case Type::VOID:
+                return std::make_unique<VoidType>();
+        }
+        return nullptr;
+    }
+    
+    std::unique_ptr<TypeClass> toTypeClass(TokenType tokenType)
+    {
+        switch (tokenType)
         {
             case TokenType::INT:
-                return ExprType::INTEGER;
-            case TokenType::CHAR: 
-                return ExprType::CHARACTER;
-            case TokenType::BOOL: 
-                return ExprType::BOOLEAN;
-            case TokenType::REAL: 
-                return ExprType::DOUBLE;
+                return std::make_unique<IntegerType>();
+            case TokenType::REAL:
+                return std::make_unique<DoubleType>();
+            case TokenType::BOOL:
+                return std::make_unique<BooleanType>();
+            case TokenType::CHAR:
+                return std::make_unique<CharacterType>();
             default:
-                break;
+                return std::make_unique<VoidType>();
         }
-        return ExprType::VOID;
+    }
+    
+    bool isEqual(std::unique_ptr<TypeClass>& a, std::unique_ptr<TypeClass>& b)
+    {
+        return a->baseType == b->baseType;
     }
     
     ASTvalue* execute(VarDecl* node) override
     {
-        TokenType varType = node->dataType->type;
-        stack.push_back(StackValue{node->name, currentScope, toExprType(varType)});
-
-        if(node->expr == nullptr) return nullptr;
-        
+        node->typeClass = std::make_unique<VoidType>();
         node->expr->execute(this);
-        ExprType exprType = node->expr->exprType;
-        
-        if (varType == TokenType::INT && exprType == ExprType::INTEGER)
+
+        std::unique_ptr<TypeClass> varTypeClass = toTypeClass(node->dataType->type);        
+        if (isEqual(varTypeClass, node->expr->typeClass))
         {
-            return nullptr;
-        }
-        if (varType == TokenType::REAL && exprType == ExprType::DOUBLE)
-        {
-            return nullptr;
-        }
-        if (varType == TokenType::CHAR && exprType == ExprType::CHARACTER)
-        {
-            return nullptr;
-        }
-        if (varType == TokenType::BOOL && exprType == ExprType::BOOLEAN)
-        {
+            stack.push_back({node->name, currentScope, std::move(varTypeClass)});
             return nullptr;
         }
         
         throw Error{node->dataType, "Cannot initialize a value of incompatible type."};
     }
-
+    
     ASTvalue* execute(SetVar* node) override
     {
+        node->typeClass = std::make_unique<VoidType>();
         node->expr->execute(this);
         
         for (int i = stack.size() - 1; i >= 0; i--)
         {
             if (node->name == stack[i].name)
             {
-                if (stack[i].Exprtype == node->expr->exprType) return nullptr;
+                if (isEqual(stack[i].typeClass, node->expr->typeClass)) return nullptr;
                 throw Error{node->token, "Assigning a value of incompatible type."};
             }
         }
@@ -287,14 +290,14 @@ class TypeChecker : public AstnodeOperator
             node->list[i]->execute(this);    
         }
         
-        node->exprType = ExprType::VOID;
+        node->typeClass = std::make_unique<VoidType>();
         return nullptr;
     }
 
     ASTvalue* execute(PrintStmt* node) override
     {
         node->expr->execute(this);
-        node->exprType = ExprType::VOID;
+        node->typeClass = std::make_unique<VoidType>();
         return nullptr;
     }
     
@@ -304,7 +307,7 @@ class TypeChecker : public AstnodeOperator
         {
             if (node->name == stack[i].name)
             {
-                node->exprType = stack[i].Exprtype;
+                node->typeClass = copyTypeClass(stack[i].typeClass);
                 return nullptr;
             }
         }
@@ -333,16 +336,16 @@ class TypeChecker : public AstnodeOperator
         node->stmtList->execute(this);
         endScope();
         
-        node->exprType = ExprType::VOID;
+        node->typeClass = std::make_unique<VoidType>();
         return nullptr;
     }
      
     virtual ASTvalue* execute(IfStatement* node) override 
     {
-        node->exprType = ExprType::VOID;
+        node->typeClass = std::make_unique<VoidType>();
         node->condition->execute(this);
 
-        if (node->condition->exprType != ExprType::BOOLEAN)
+        if (node->condition->typeClass->baseType != Type::BOOLEAN)
         {
             throw Error{node->token, "Expected a boolean expression inside the condition."};
         }
@@ -353,10 +356,10 @@ class TypeChecker : public AstnodeOperator
     
     virtual ASTvalue* execute(ElifStatement* node) override 
     {
-        node->exprType = ExprType::VOID;
+        node->typeClass = std::make_unique<VoidType>();
         node->condition->execute(this);
 
-        if (node->condition->exprType != ExprType::BOOLEAN)
+        if (node->condition->typeClass->baseType != Type::BOOLEAN)
         {
             throw Error{node->token, "Expected a boolean expression inside the condition."};
         }
@@ -369,17 +372,17 @@ class TypeChecker : public AstnodeOperator
 
     virtual ASTvalue* execute(ElseStatement* node) override 
     {
-        node->exprType = ExprType::VOID;
+        node->typeClass = std::make_unique<VoidType>();
         node->block->execute(this);
         return nullptr;
     }
 
     virtual ASTvalue* execute(WhileStatement* node) override 
     {
-        node->exprType = ExprType::VOID;
+        node->typeClass = std::make_unique<VoidType>();
         node->condition->execute(this);
 
-        if (node->condition->exprType != ExprType::BOOLEAN)
+        if (node->condition->typeClass->baseType != Type::BOOLEAN)
         {
             throw Error{node->token, "Expected a boolean expression inside the condition."};
         }
@@ -398,24 +401,33 @@ class TypeChecker : public AstnodeOperator
         node->block->execute(this);
         endScope();
 
-        if (node->condition && node->condition->exprType != ExprType::BOOLEAN)
+        if (node->condition && node->condition->typeClass->baseType != Type::BOOLEAN)
         {
             throw Error{node->token, "Expected a boolean expression inside the condition."};
         }
         
-        node->exprType = ExprType::VOID;
+        node->typeClass = std::make_unique<VoidType>();
         return nullptr;
     }
 
-    bool checkType(ExprType left, ExprType leftExpected, ExprType right, ExprType rightExpected)
+    bool isType(std::unique_ptr<TypeClass>& typeClass, Type type)
+    {
+        return typeClass->baseType == type;
+    }
+
+    bool checkType(Type left, Type leftExpected, Type right, Type rightExpected)
     {
         return left == leftExpected && right == rightExpected;
     }
-
-    bool isComparable(ExprType expr)
+    
+    bool isComparable(Type left, Type right)
     {
-        if (expr == ExprType::INTEGER || expr == ExprType::DOUBLE ||
-            expr == ExprType::BOOLEAN || expr == ExprType::CHARACTER)
+        if (checkType(left, Type::INTEGER, right, Type::INTEGER)
+            || checkType(left, Type::DOUBLE, right, Type::DOUBLE)
+            || checkType(left, Type::INTEGER, right, Type::DOUBLE)
+            || checkType(left, Type::DOUBLE, right, Type::INTEGER)
+            || checkType(left, Type::BOOLEAN, right, Type::BOOLEAN)
+            || checkType(left, Type::CHARACTER, right, Type::CHARACTER))
         {
             return true;    
         }
@@ -423,21 +435,9 @@ class TypeChecker : public AstnodeOperator
         return false;
     }
     
-    bool isCompatible(ExprType left, ExprType right)
+    bool isNumberType(Type type)
     {
-        if (left == right
-            || checkType(left, ExprType::INTEGER, right, ExprType::DOUBLE)
-            || checkType(left, ExprType::DOUBLE, right, ExprType::INTEGER))
-        {
-            return true;    
-        }
-
-        return false;
-    }
-    
-    bool isNumberType(ExprType expr)
-    {
-        if (expr == ExprType::INTEGER || expr == ExprType::DOUBLE) return true;
+        if (type == Type::INTEGER || type == Type::DOUBLE) return true;
         return false;
     }
 

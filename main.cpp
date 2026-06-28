@@ -21,7 +21,6 @@ int main(int argc, char** args)
     std::vector<Token> tokens;
     Scanner scanner(source, tokens);
     scanner.scan();
-    scanner.printTokens();
 
     if (scanner.hadError) return 0;
 
@@ -41,8 +40,8 @@ int main(int argc, char** args)
     if (typeChecker.hadError) return 0;
 
     Interpreter interpreter{};
-    InterpreterValue* value = interpreter.execute(root.get());
-
+    interpreter.execute(root.get());
+    
     return 0;
 }
 

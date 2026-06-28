@@ -45,7 +45,6 @@ class Resolver : public AstnodeOperator
     virtual ASTvalue* execute(Integer* node) {return nullptr;}
     virtual ASTvalue* execute(Double* node) {return nullptr;}
     virtual ASTvalue* execute(Character* node) {return nullptr;}
-    virtual ASTvalue* execute(String* node) {return nullptr;}
     virtual ASTvalue* execute(Boolean* node) {return nullptr;}
 
     virtual ASTvalue* execute(Unary* node)
@@ -97,7 +96,7 @@ class Resolver : public AstnodeOperator
 
     virtual ASTvalue* execute(VarDecl* node)
     {
-        if (node->expr) node->expr->execute(this);
+        node->expr->execute(this);
        
         for (int i = stack.size() - 1; i >= 0; i--)
         {

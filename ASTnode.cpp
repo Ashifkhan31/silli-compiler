@@ -30,16 +30,6 @@ ASTvalue* Character::execute(AstnodeOperator* operation)
     return operation->execute(dynamic_cast<Character*>(this));
 }
 
-String::String(std::string _str, Token* _token) : str(_str), token(_token)
-{
-    
-}
-
-ASTvalue* String::execute(AstnodeOperator* operation)
-{
-    return operation->execute(dynamic_cast<String*>(this));
-}
-
 Boolean::Boolean(bool _value, Token* _token) : value(_value), token(_token)
 {
     

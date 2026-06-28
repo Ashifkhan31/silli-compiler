@@ -2,6 +2,7 @@
 #define interpreter_h
 
 #include "ASTnode.h"
+#include "typeclass.h"
 #include <variant>
 #include <unordered_map>
 
@@ -69,11 +70,6 @@ class Interpreter : public AstnodeOperator
         return new InterpreterValue(node->c);      
     }
 
-    InterpreterValue* execute(String* node) override
-    {
-        return new InterpreterValue(node->str);      
-    }
-
     InterpreterValue* execute(Boolean* node) override
     {
         return new InterpreterValue(node->value);      
@@ -84,12 +80,12 @@ class Interpreter : public AstnodeOperator
         InterpreterValue* value = executeNode(node->child.get());
         TokenType tokenType = node->token->type;
         
-        if(checkType(node, ExprType::INTEGER) && tokenType == TokenType::MINUS)
+        if(checkType(node, Type::INTEGER) && tokenType == TokenType::MINUS)
         {
             value->value = -std::get<int>(value->value);
         }
 
-        if(checkType(node, ExprType::DOUBLE) && tokenType == TokenType::MINUS)
+        if(checkType(node, Type::DOUBLE) && tokenType == TokenType::MINUS)
         {
             value->value = -std::get<double>(value->value);
         }
@@ -115,22 +111,22 @@ class Interpreter : public AstnodeOperator
 
         TokenType tokenType = node->token->type;
 
-        if (checkType(leftNode, ExprType::DOUBLE, rightNode, ExprType::DOUBLE))
+        if (checkType(leftNode, Type::DOUBLE, rightNode, Type::DOUBLE))
         {
             leftValue = arithmeticOp<double, double, double>(leftValue, rightValue, tokenType); 
         }
         
-        if (checkType(leftNode, ExprType::DOUBLE, rightNode, ExprType::INTEGER))
+        if (checkType(leftNode, Type::DOUBLE, rightNode, Type::INTEGER))
         {
             leftValue = arithmeticOp<double, int, double>(leftValue, rightValue, tokenType); 
         }
         
-        if (checkType(leftNode, ExprType::INTEGER, rightNode, ExprType::DOUBLE))
+        if (checkType(leftNode, Type::INTEGER, rightNode, Type::DOUBLE))
         {
             leftValue = arithmeticOp<int, double, double>(leftValue, rightValue, tokenType); 
         }
         
-        if (checkType(leftNode, ExprType::INTEGER, rightNode, ExprType::INTEGER))
+        if (checkType(leftNode, Type::INTEGER, rightNode, Type::INTEGER))
         {
             leftValue = arithmeticOp<int, int, int>(leftValue, rightValue, tokenType);    
         }
@@ -153,22 +149,22 @@ class Interpreter : public AstnodeOperator
 
         TokenType tokenType = node->token->type;
 
-        if (checkType(leftNode, ExprType::DOUBLE, rightNode, ExprType::DOUBLE))
+        if (checkType(leftNode, Type::DOUBLE, rightNode, Type::DOUBLE))
         {
             leftValue = arithmeticOp<double, double, double>(leftValue, rightValue, tokenType); 
         }
         
-        if (checkType(leftNode, ExprType::DOUBLE, rightNode, ExprType::INTEGER))
+        if (checkType(leftNode, Type::DOUBLE, rightNode, Type::INTEGER))
         {
             leftValue = arithmeticOp<double, int, double>(leftValue, rightValue, tokenType); 
         }
         
-        if (checkType(leftNode, ExprType::INTEGER, rightNode, ExprType::DOUBLE))
+        if (checkType(leftNode, Type::INTEGER, rightNode, Type::DOUBLE))
         {
             leftValue = arithmeticOp<int, double, double>(leftValue, rightValue, tokenType); 
         }
         
-        if (checkType(leftNode, ExprType::INTEGER, rightNode, ExprType::INTEGER))
+        if (checkType(leftNode, Type::INTEGER, rightNode, Type::INTEGER))
         {
             leftValue = arithmeticOp<int, int, int>(leftValue, rightValue, tokenType);    
         }
@@ -191,22 +187,22 @@ class Interpreter : public AstnodeOperator
 
         TokenType tokenType = node->token->type;
         
-        if (checkType(leftNode, ExprType::DOUBLE, rightNode, ExprType::DOUBLE))
+        if (checkType(leftNode, Type::DOUBLE, rightNode, Type::DOUBLE))
         {
             leftValue = RelationalOp<double, double>(leftValue, rightValue, tokenType); 
         }
         
-        if (checkType(leftNode, ExprType::DOUBLE, rightNode, ExprType::INTEGER))
+        if (checkType(leftNode, Type::DOUBLE, rightNode, Type::INTEGER))
         {
             leftValue = RelationalOp<double, int>(leftValue, rightValue, tokenType); 
         }
         
-        if (checkType(leftNode, ExprType::INTEGER, rightNode, ExprType::DOUBLE))
+        if (checkType(leftNode, Type::INTEGER, rightNode, Type::DOUBLE))
         {
             leftValue = RelationalOp<int, double>(leftValue, rightValue, tokenType); 
         }
         
-        if (checkType(leftNode, ExprType::INTEGER, rightNode, ExprType::INTEGER))
+        if (checkType(leftNode, Type::INTEGER, rightNode, Type::INTEGER))
         {
             leftValue = RelationalOp<int, int>(leftValue, rightValue, tokenType);    
         }
@@ -229,32 +225,32 @@ class Interpreter : public AstnodeOperator
 
         TokenType tokenType = node->token->type;
         
-        if (checkType(leftNode, ExprType::DOUBLE, rightNode, ExprType::DOUBLE))
+        if (checkType(leftNode, Type::DOUBLE, rightNode, Type::DOUBLE))
         {
             leftValue = EquivalentOp<double, double>(leftValue, rightValue, tokenType); 
         }
         
-        if (checkType(leftNode, ExprType::DOUBLE, rightNode, ExprType::INTEGER))
+        if (checkType(leftNode, Type::DOUBLE, rightNode, Type::INTEGER))
         {
             leftValue = EquivalentOp<double, int>(leftValue, rightValue, tokenType); 
         }
         
-        if (checkType(leftNode, ExprType::INTEGER, rightNode, ExprType::DOUBLE))
+        if (checkType(leftNode, Type::INTEGER, rightNode, Type::DOUBLE))
         {
             leftValue = EquivalentOp<int, double>(leftValue, rightValue, tokenType); 
         }
         
-        if (checkType(leftNode, ExprType::INTEGER, rightNode, ExprType::INTEGER))
+        if (checkType(leftNode, Type::INTEGER, rightNode, Type::INTEGER))
         {
             leftValue = EquivalentOp<int, int>(leftValue, rightValue, tokenType);    
         }
 
-        if (checkType(leftNode, ExprType::CHARACTER, rightNode, ExprType::CHARACTER))
+        if (checkType(leftNode, Type::CHARACTER, rightNode, Type::CHARACTER))
         {
             leftValue = EquivalentOp<char, char>(leftValue, rightValue, tokenType);    
         }
 
-        if (checkType(leftNode, ExprType::BOOLEAN, rightNode, ExprType::BOOLEAN))
+        if (checkType(leftNode, Type::BOOLEAN, rightNode, Type::BOOLEAN))
         {
             leftValue = EquivalentOp<bool, bool>(leftValue, rightValue, tokenType);    
         }
@@ -493,16 +489,16 @@ class Interpreter : public AstnodeOperator
         return dynamic_cast<InterpreterValue*>(node->execute(this));
     }
 
-    bool checkType(ASTnode* node, ExprType expected)
+    bool checkType(ASTnode* node, Type expected)
     {
         if (node == nullptr) return false;
-        return node->exprType == expected;
+        return node->typeClass->baseType == expected;
     }
 
-    bool checkType(ASTnode* left, ExprType lType, ASTnode* right, ExprType rType)
+    bool checkType(ASTnode* left, Type lType, ASTnode* right, Type rType)
     {
         if (left == nullptr || right == nullptr) return false;
-        return left->exprType == lType && right->exprType == rType;
+        return left->typeClass->baseType == lType && right->typeClass->baseType == rType;
     }   
     
     template<typename A, typename B, typename R>

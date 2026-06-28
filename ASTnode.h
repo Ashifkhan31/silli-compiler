@@ -4,18 +4,9 @@
 #include <memory>
 #include "token.h"
 #include "common.h"
+#include "typeclass.h"
 
 class AstnodeOperator;
-
-enum class ExprType
-{
-    INTEGER,
-    DOUBLE,
-    CHARACTER,
-    STRING,
-    BOOLEAN,
-    VOID,
-};
 
 class ASTvalue
 {
@@ -29,8 +20,8 @@ class ASTvalue
 class ASTnode
 {
     public:
-    ExprType exprType;
-    
+    std::unique_ptr<TypeClass> typeClass; 
+        
     virtual ASTvalue* execute(AstnodeOperator* operation) = 0;
 
     protected:
@@ -41,7 +32,6 @@ class Name;
 class Integer;
 class Double;
 class Character;
-class String;
 class Boolean;
 class Unary;
 class Factor;
@@ -71,7 +61,6 @@ class AstnodeOperator
     virtual ASTvalue* execute(Integer* node) = 0;
     virtual ASTvalue* execute(Double* node) = 0;
     virtual ASTvalue* execute(Character* node) = 0;
-    virtual ASTvalue* execute(String* node) = 0;
     virtual ASTvalue* execute(Boolean* node) = 0;
     virtual ASTvalue* execute(Unary* node) = 0;
     virtual ASTvalue* execute(Factor* node) = 0;
@@ -119,16 +108,6 @@ class Character : public ASTnode
     Token* token;
 
     Character(char _c, Token* _token);
-    ASTvalue* execute(AstnodeOperator* operation);
-};
-
-class String : public ASTnode
-{
-    public:
-    std::string str;
-    Token* token;
-
-    String(std::string _str, Token* _token);
     ASTvalue* execute(AstnodeOperator* operation);
 };
 

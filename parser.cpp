@@ -204,12 +204,8 @@ ASTnode* Parser::varDeclaration()
     Token* dataType = consume();
     Token* name = consume(TokenType::IDENTIFIER, "Expect name in variable declaration.");
 
-    ASTnode* expr = nullptr;
-    if(check(TokenType::EQUAL))
-    {
-        consume();
-        expr = logical();
-    }
+    consume(TokenType::EQUAL, "Expect '=' after name.");
+    ASTnode* expr = logical();
 
     std::string str{name->start, name->length};
     return new VarDecl(dataType, str, expr, name);
