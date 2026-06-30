@@ -344,13 +344,14 @@ class TypeChecker : public AstnodeOperator
     {
         node->typeClass = std::make_unique<VoidType>();
         node->condition->execute(this);
-
+        
         if (node->condition->typeClass->baseType != Type::BOOLEAN)
         {
             throw Error{node->token, "Expected a boolean expression inside the condition."};
         }
         
         node->block->execute(this);
+        if (node->tail) node->tail->execute(this);
         return nullptr;
     }
     
