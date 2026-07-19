@@ -18,8 +18,10 @@ class Parser
     ASTnode* parseCondition();
     ASTnode* parseUpdater();
     ASTnode* ifTail();
+    Token* consumeType();
     
     public:
+    bool hadError = false;
 
     Parser(std::vector<Token>& _tokens);
     Program* parse();
@@ -41,7 +43,7 @@ class Parser
     ASTnode* factor();
     ASTnode* unary();
     ASTnode* primary();
-    bool hadError = false;
+    ASTnode* variable();
 };
 
 #endif

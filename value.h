@@ -9,6 +9,8 @@ enum class ValueType
     REAL,
     CHAR,
     BOOL,
+    ARRAY,
+    REFERENCE,
 };
 
 class Value : public ASTvalue
@@ -38,7 +40,7 @@ class BoolValue : public Value
 {
     public:
     bool value;;
-    BoolValue(bool _value) : Value(ValueType::INTEGER), value(_value) {}
+    BoolValue(bool _value) : Value(ValueType::BOOL), value(_value) {}
 };
 
 class CharacterValue : public Value
@@ -46,6 +48,24 @@ class CharacterValue : public Value
     public:
     char character;
     CharacterValue(char _character) : Value(ValueType::CHAR), character(_character) {}
+};
+
+class ArrayValue : public Value
+{
+    public:
+    std::vector<std::unique_ptr<Value>> elements;
+
+    ArrayValue() : Value(ValueType::ARRAY)
+    {
+        elements.reserve(10);
+    }
+};
+
+class ReferenceValue : public Value
+{
+    public:
+    Value* val;
+    ReferenceValue(Value* _val) : Value(ValueType::REFERENCE), val(_val) {}
 };
 
 #endif

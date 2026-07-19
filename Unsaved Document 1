@@ -1,0 +1,144 @@
+#start_symbol S;
+
+S -> declist;
+
+declist -> decl declist;
+declist -> eof;
+
+decl -> varstmt semi;
+
+decl -> def identifier lp paramlist rp identifier block;
+
+decl -> struct identifier lb varlist rb;
+varlist -> varstmt semi varlist;
+varlist -> ;
+
+paramlist -> identifier identifer paramtail;
+paramlist -> ;
+
+paramtail -> comma identifier identifier paramtail;
+paramtail -> ;
+
+stmtlist -> stmt semi stmtlist;
+stmtlist -> ;
+
+stmt -> varstmt;
+stmt -> assignstmt;
+stmt -> exprstmt;
+stmt -> whilestmt;
+stmt -> forstmt;
+stmt -> ifstmt;
+stmt -> break;
+stmt -> continue;
+
+type -> identifier isArray isref;
+isArray -> lb rb;
+isArray -> ;
+isref -> ampersand;
+isref-> ;
+
+varstmt -> type identifier varinit;
+
+varstmt -> fn type identifier argtypes varinit;
+  
+argtypes -> type argtypes;
+argtypes -> ; 
+
+varinit -> equal logic;
+varinit -> ;
+
+assignstmt -> set variable index equal logic;
+
+index -> lb logic rb;
+index -> ;
+
+exprstmt -> do logic;
+
+block -> lb stmtlist rb;
+
+whilestmt -> while lp logic rp block;
+
+forstmt -> for lp forinit forcondition forincr rp block;
+
+forinit -> varstmt semi;
+forinit -> assignstmt semi;
+forinit -> semi;
+
+forcondition -> logic semi;
+forcondition -> semi;
+
+forincr -> assignstmt;
+forincr -> logic;
+forincr -> ;
+
+ifstmt -> if lp logic rp block iftail;
+
+iftail -> elif lp logic rp block iftail;
+iftail -> else block;
+iftail -> ;
+
+logic -> equiv logictail;
+logictail -> and equiv logictail;
+logictail -> or equiv logictail;
+logictail -> ;
+
+equiv -> rel equivtail;
+equivtail -> eqeq rel equivtail;
+equivtail -> noteq rel equivtail;
+equivtail -> ;
+
+rel -> term reltail;
+reltail -> less term reltail;
+reltail -> great term reltail;
+reltail -> lsseq term reltail;
+reltail -> grteq term reltail;
+reltail -> ;
+
+term -> factor termtail;
+termtail -> plus factor termtail;
+termtail -> minus factor termtail;
+termtail -> ;
+
+factor -> unary factortail;
+factortail -> star unary factortail;
+factortail -> slash unary factortail;
+factortail -> percnt unary factortail;
+factortail -> ;
+
+unary -> minus value;
+unary -> not value;
+unary -> value;
+
+value -> integer;
+value -> double;
+value -> character;
+value -> string;
+value -> true;
+value -> false;
+value -> array;
+value -> variable;
+
+array -> lb logic arrayelements rb;
+
+arrayelements -> comma logic arrayelements;
+arrayelements -> ;
+
+array -> ls identifier logic rs;
+
+variable -> dot identifier lb arglist rb;
+variable -> identifier variabletail;
+
+variabletail -> ls logic rs variabletail;
+
+variabletail -> lp arglist rp variabletail;
+
+arglist -> logic argtail;
+arglist -> ;
+argtail -> comma logic argtail;
+argtail -> ;
+
+variabletail -> dot variable;
+
+variabletail -> ;
+
+

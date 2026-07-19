@@ -61,26 +61,76 @@ class TypeChecker : public AstnodeOperator
         node->typeClass = std::make_unique<BooleanType>();
         return nullptr;
     }    
+
+    ASTvalue* execute(String* node) override
+    {
+        node->typeClass = std::make_unique<ArrayType>(std::make_unique<CharacterType>());
+        return nullptr;
+    }    
+
+    ASTvalue* execute(Array* node) override
+    {
+        node->elements[0]->execute(this);
+        std::unique_ptr<TypeClass>& elementType = unWrapReference(node->elements[0]->typeClass);
+        
+        if(elementType->baseType == Type::ARRAY) throw Error{"Nested Arrays are not allowed."};
+
+        for(int i = 1; i < node->elements.size(); i++)
+        {
+            node->elements[i]->execute(this);
+            if(!isEqual(elementType, unWrapReference(node->elements[i]->typeClass)))
+            {
+                throw Error{"Arrays cannot be of mixed types."};
+            }
+        }
+
+        node->typeClass = std::make_unique<ArrayType>(copyTypeClass(elementType));
+        return nullptr;
+    }
+
+    ASTvalue* execute(VariableLengthArray* node) override
+    {
+        node->size->execute(this);
+        if (unWrapReference(node->size->typeClass)->baseType != Type::INTEGER)
+        {
+            throw Error{"Index should be a integer."};    
+        }
+        
+        node->typeClass = std::make_unique<ArrayType>(toTypeClass(node->token->type));
+        return nullptr;
+    }
+    
+    std::unique_ptr<TypeClass>& unWrapReference(std::unique_ptr<TypeClass>& typeClass)
+    {
+        if(typeClass->baseType == Type::REFERENCE)
+        {
+            return dynamic_cast<ReferenceType*>(typeClass.get())->simpleType;
+        }
+
+        return typeClass;
+    }
     
     ASTvalue* execute(Unary* node) override
     {
         ASTnode* child = node->child.get();
         child->execute(this);
+
+        std::unique_ptr<TypeClass>& childTypeClass = unWrapReference(child->typeClass);
         TokenType tokenType = node->token->type;
         
-        if (tokenType == TokenType::MINUS && isType(child->typeClass, Type::INTEGER))
+        if (tokenType == TokenType::MINUS && isType(childTypeClass, Type::INTEGER))
         {
             node->typeClass = std::make_unique<IntegerType>();
             return nullptr;
         }
         
-        if (tokenType == TokenType::MINUS && isType(child->typeClass, Type::DOUBLE))
+        if (tokenType == TokenType::MINUS && isType(childTypeClass, Type::DOUBLE))
         {
             node->typeClass = std::make_unique<DoubleType>();
             return nullptr;
         }
         
-        if (tokenType == TokenType::NOT && isType(child->typeClass, Type::BOOLEAN))
+        if (tokenType == TokenType::NOT && isType(childTypeClass, Type::BOOLEAN))
         {
             node->typeClass = std::make_unique<BooleanType>();
             return nullptr;
@@ -93,9 +143,9 @@ class TypeChecker : public AstnodeOperator
     {
         node->left->execute(this);
         node->right->execute(this);
-
-        Type leftType = node->left->typeClass->baseType;
-        Type rightType = node->right->typeClass->baseType;
+    
+        Type leftType = unWrapReference(node->left->typeClass)->baseType;
+        Type rightType = unWrapReference(node->right->typeClass)->baseType;
 
         if (leftType == Type::DOUBLE && rightType == Type::DOUBLE)
         {
@@ -129,8 +179,8 @@ class TypeChecker : public AstnodeOperator
         node->left->execute(this);
         node->right->execute(this);
 
-        Type leftType = node->left->typeClass->baseType;
-        Type rightType = node->right->typeClass->baseType;
+        Type leftType = unWrapReference(node->left->typeClass)->baseType;
+        Type rightType = unWrapReference(node->right->typeClass)->baseType;
         bool isPercent = node->token->type == TokenType::PERCENT;
 
         if (leftType == Type::DOUBLE && rightType == Type::DOUBLE && !isPercent)
@@ -165,8 +215,8 @@ class TypeChecker : public AstnodeOperator
         node->left->execute(this);
         node->right->execute(this);
 
-        Type leftType = node->left->typeClass->baseType;
-        Type rightType = node->right->typeClass->baseType;
+        Type leftType = unWrapReference(node->left->typeClass)->baseType;
+        Type rightType = unWrapReference(node->right->typeClass)->baseType;
 
         if(isNumberType(leftType) && isNumberType(rightType))
         {
@@ -182,8 +232,8 @@ class TypeChecker : public AstnodeOperator
         node->left->execute(this);
         node->right->execute(this);
 
-        Type left = node->left->typeClass->baseType;
-        Type right = node->right->typeClass->baseType;
+        Type left = unWrapReference(node->left->typeClass)->baseType;
+        Type right = unWrapReference(node->right->typeClass)->baseType;
 
         if(isComparable(left, right))
         {
@@ -199,8 +249,8 @@ class TypeChecker : public AstnodeOperator
         node->left->execute(this);
         node->right->execute(this);
 
-        Type left = node->left->typeClass->baseType;
-        Type right = node->right->typeClass->baseType;
+        Type left = unWrapReference(node->left->typeClass)->baseType;
+        Type right = unWrapReference(node->right->typeClass)->baseType;
 
         if(checkType(left, Type::BOOLEAN, right, Type::BOOLEAN))
         {
@@ -211,8 +261,11 @@ class TypeChecker : public AstnodeOperator
         throw Error{node->token, "Operand type doesn't match with the operator."};
     }
 
+    
+    
     std::unique_ptr<TypeClass> copyTypeClass(std::unique_ptr<TypeClass>& typeClass)
     {
+        TypeClass* typePtr = typeClass.get();
         switch (typeClass->baseType)
         {
             case Type::INTEGER:
@@ -223,6 +276,18 @@ class TypeChecker : public AstnodeOperator
                 return std::make_unique<BooleanType>();
             case Type::CHARACTER:
                 return std::make_unique<CharacterType>();
+            case Type::ARRAY:
+            {
+                ArrayType* arrType = dynamic_cast<ArrayType*>(typePtr);
+                std::unique_ptr<TypeClass>& elementType = arrType->elementType;
+                return std::make_unique<ArrayType>(std::move(copyTypeClass(elementType)));
+            }
+            case Type::REFERENCE:
+            {
+                ReferenceType* refType = dynamic_cast<ReferenceType*>(typePtr);
+                std::unique_ptr<TypeClass>& simpleType = refType->simpleType;
+                return std::make_unique<ReferenceType>(std::move(copyTypeClass(simpleType)));
+            }
             case Type::VOID:
                 return std::make_unique<VoidType>();
         }
@@ -248,16 +313,37 @@ class TypeChecker : public AstnodeOperator
     
     bool isEqual(std::unique_ptr<TypeClass>& a, std::unique_ptr<TypeClass>& b)
     {
+        if (a->baseType == Type::ARRAY && b->baseType == Type::ARRAY)
+        {
+            std::unique_ptr<TypeClass>& left = dynamic_cast<ArrayType*>(a.get())->elementType; 
+            std::unique_ptr<TypeClass>& right = dynamic_cast<ArrayType*>(b.get())->elementType;
+            return isEqual(left, right); 
+        }
+        
         return a->baseType == b->baseType;
     }
-    
+
     ASTvalue* execute(VarDecl* node) override
     {
-        node->typeClass = std::make_unique<VoidType>();
-        node->expr->execute(this);
-
         std::unique_ptr<TypeClass> varTypeClass = toTypeClass(node->dataType->type);        
-        if (isEqual(varTypeClass, node->expr->typeClass))
+        if (node->isArray)
+        {
+            varTypeClass = std::make_unique<ArrayType>(std::move(varTypeClass));
+        }
+        node->typeClass = copyTypeClass(varTypeClass);
+
+        if (node->expr)
+        {
+            node->expr->execute(this);
+        }
+        else
+        {
+            stack.push_back({node->name, currentScope, std::move(varTypeClass)});
+            return nullptr;
+        }
+
+        std::unique_ptr<TypeClass>& exprTypeClass = unWrapReference(node->expr->typeClass);
+        if (isEqual(varTypeClass, exprTypeClass))
         {
             stack.push_back({node->name, currentScope, std::move(varTypeClass)});
             return nullptr;
@@ -265,22 +351,52 @@ class TypeChecker : public AstnodeOperator
         
         throw Error{node->dataType, "Cannot initialize a value of incompatible type."};
     }
+
+    ASTvalue* execute(ElementAccess* node) override
+    {
+        node->index->execute(this);
+        node->node->execute(this);
+        TypeClass* varType = unWrapReference(node->node->typeClass).get();
+        Type indexType = unWrapReference(node->index->typeClass)->baseType;
+        
+        if (indexType != Type::INTEGER)
+        {
+            throw Error{node->token, "Expected a integer type in array index."};    
+        }
+
+        if (varType->baseType != Type::ARRAY)
+        {
+            throw Error{node->token, "Indexing a variable that is not an array."};    
+        }
+
+        std::unique_ptr<TypeClass>& elementType = dynamic_cast<ArrayType*>(varType)->elementType;
+        std::unique_ptr<TypeClass> copiedElementType = copyTypeClass(elementType);
+
+        if (node->node->typeClass->baseType == Type::REFERENCE)
+        {
+            node->typeClass = std::make_unique<ReferenceType>(std::move(copiedElementType));
+        }
+        else
+        {            
+            node->typeClass = std::move(copiedElementType);
+        }
+        
+        return nullptr;
+    }
     
     ASTvalue* execute(SetVar* node) override
     {
         node->typeClass = std::make_unique<VoidType>();
         node->expr->execute(this);
-        
-        for (int i = stack.size() - 1; i >= 0; i--)
-        {
-            if (node->name == stack[i].name)
-            {
-                if (isEqual(stack[i].typeClass, node->expr->typeClass)) return nullptr;
-                throw Error{node->token, "Assigning a value of incompatible type."};
-            }
-        }
+        node->variable->execute(this);
 
-        return nullptr;
+        bool isReference = node->variable->typeClass->baseType == Type::REFERENCE;
+        std::unique_ptr<TypeClass>& varTypeClass = unWrapReference(node->variable->typeClass);
+        std::unique_ptr<TypeClass>& exprTypeClass = unWrapReference(node->expr->typeClass);
+
+        if (isReference && isEqual(varTypeClass, exprTypeClass)) return nullptr;
+
+        throw Error{node->token, "Assigning a value of incompatible type."};
     }
 
     ASTvalue* execute(StatementList* node) override
@@ -307,7 +423,12 @@ class TypeChecker : public AstnodeOperator
         {
             if (node->name == stack[i].name)
             {
-                node->typeClass = copyTypeClass(stack[i].typeClass);
+                std::unique_ptr<TypeClass> baseType = copyTypeClass(stack[i].typeClass);
+
+                std::unique_ptr<ReferenceType> refType;
+                refType = std::make_unique<ReferenceType>(std::move(baseType));
+
+                node->typeClass = std::move(refType);
                 return nullptr;
             }
         }
@@ -344,8 +465,9 @@ class TypeChecker : public AstnodeOperator
     {
         node->typeClass = std::make_unique<VoidType>();
         node->condition->execute(this);
-        
-        if (node->condition->typeClass->baseType != Type::BOOLEAN)
+
+        std::unique_ptr<TypeClass>& typeClass = unWrapReference(node->condition->typeClass);
+        if (typeClass->baseType != Type::BOOLEAN)
         {
             throw Error{node->token, "Expected a boolean expression inside the condition."};
         }
@@ -360,7 +482,8 @@ class TypeChecker : public AstnodeOperator
         node->typeClass = std::make_unique<VoidType>();
         node->condition->execute(this);
 
-        if (node->condition->typeClass->baseType != Type::BOOLEAN)
+        std::unique_ptr<TypeClass>& typeClass = unWrapReference(node->condition->typeClass);
+        if (typeClass->baseType != Type::BOOLEAN)
         {
             throw Error{node->token, "Expected a boolean expression inside the condition."};
         }
@@ -383,7 +506,8 @@ class TypeChecker : public AstnodeOperator
         node->typeClass = std::make_unique<VoidType>();
         node->condition->execute(this);
 
-        if (node->condition->typeClass->baseType != Type::BOOLEAN)
+        std::unique_ptr<TypeClass>& typeClass = unWrapReference(node->condition->typeClass);
+        if (typeClass->baseType != Type::BOOLEAN)
         {
             throw Error{node->token, "Expected a boolean expression inside the condition."};
         }
@@ -402,7 +526,8 @@ class TypeChecker : public AstnodeOperator
         node->block->execute(this);
         endScope();
 
-        if (node->condition && node->condition->typeClass->baseType != Type::BOOLEAN)
+        if (node->condition &&
+            unWrapReference(node->condition->typeClass)->baseType != Type::BOOLEAN)
         {
             throw Error{node->token, "Expected a boolean expression inside the condition."};
         }

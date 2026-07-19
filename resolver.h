@@ -46,7 +46,24 @@ class Resolver : public AstnodeOperator
     virtual ASTvalue* execute(Double* node) {return nullptr;}
     virtual ASTvalue* execute(Character* node) {return nullptr;}
     virtual ASTvalue* execute(Boolean* node) {return nullptr;}
+    virtual ASTvalue* execute(String* node) {return nullptr;}
 
+    virtual ASTvalue* execute(VariableLengthArray* node)
+    {
+        node->size->execute(this);
+        return nullptr;    
+    }
+    
+    virtual ASTvalue* execute(Array* node)
+    {
+        for(int i = 0; i < node->elements.size(); i++)
+        {
+            node->elements[i]->execute(this);
+        }
+
+        return nullptr;
+    }
+    
     virtual ASTvalue* execute(Unary* node)
     {
         node->child->execute(this);
@@ -96,7 +113,7 @@ class Resolver : public AstnodeOperator
 
     virtual ASTvalue* execute(VarDecl* node)
     {
-        node->expr->execute(this);
+        if (node->expr) node->expr->execute(this);
        
         for (int i = stack.size() - 1; i >= 0; i--)
         {
@@ -111,20 +128,19 @@ class Resolver : public AstnodeOperator
         stack.push_back(StackValue{node->name, currentScope});
         return nullptr;
     }
+
+    virtual ASTvalue* execute(ElementAccess* node)
+    {
+        node->index->execute(this);
+        node->node->execute(this);
+        return nullptr;
+    }
     
     virtual ASTvalue* execute(SetVar* node)
     {
         node->expr->execute(this);
-        
-        for (int i = stack.size() - 1; i >= 0; i--)
-        {
-            if (node->name == stack[i].name)
-            {
-                return nullptr;
-            }
-        }
-
-        throw Error{node->token, "Reference to undefined variable."};    
+        node->variable->execute(this);
+        return nullptr;
     }
 
     virtual ASTvalue* execute(Name* node)

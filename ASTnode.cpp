@@ -40,6 +40,36 @@ ASTvalue* Boolean::execute(AstnodeOperator* operation)
     return operation->execute(dynamic_cast<Boolean*>(this));
 }
 
+Array::Array(Token* _token) : token(_token)
+{
+    
+}
+
+ASTvalue* Array::execute(AstnodeOperator* operation)
+{
+    return operation->execute(dynamic_cast<Array*>(this));
+}
+
+String::String(std::string _str, Token* _token) : str(_str), token(_token)
+{
+    
+}
+
+ASTvalue* String::execute(AstnodeOperator* operation)
+{
+    return operation->execute(dynamic_cast<String*>(this));
+}
+
+VariableLengthArray::VariableLengthArray(Token* _token, ASTnode* _size) : token(_token), size(_size)
+{
+    
+}
+
+ASTvalue* VariableLengthArray::execute(AstnodeOperator* operation)
+{
+    return operation->execute(dynamic_cast<VariableLengthArray*>(this));
+}
+
 Unary::Unary(ASTnode* _child, Token* _token) : child(_child), token(_token)
 {
     
@@ -115,8 +145,8 @@ ASTvalue* Program::execute(AstnodeOperator* operation)
     return operation->execute(dynamic_cast<Program*>(this));
 }
 
-VarDecl::VarDecl(Token* _dataType, std::string _name, ASTnode* _expr, Token* _token) :
-                 dataType(_dataType), name(_name), expr(_expr), token(_token)
+VarDecl::VarDecl(Token* _dataType, bool _isArray, std::string _name, ASTnode* _expr, Token* _token)
+                 : dataType(_dataType), isArray(_isArray), name(_name), expr(_expr), token(_token)
 {
     
 }
@@ -126,8 +156,8 @@ ASTvalue* VarDecl::execute(AstnodeOperator* operation)
     return operation->execute(dynamic_cast<VarDecl*>(this));
 }
 
-SetVar::SetVar(std::string _name, ASTnode* _expr, Token* _token)
-                : name(_name), expr(_expr), token(_token)
+SetVar::SetVar(ASTnode* _variable, ASTnode* _expr, Token* _token)
+                : variable(_variable), expr(_expr), token(_token)
 {
     
 }
@@ -135,6 +165,17 @@ SetVar::SetVar(std::string _name, ASTnode* _expr, Token* _token)
 ASTvalue* SetVar::execute(AstnodeOperator* operation)
 {
     return operation->execute(dynamic_cast<SetVar*>(this));
+}
+
+ElementAccess::ElementAccess(ASTnode* _index, ASTnode* _node, Token* _token)
+                : index(_index), node(_node), token(_token)
+{
+    
+}
+
+ASTvalue* ElementAccess::execute(AstnodeOperator* operation)
+{
+    return operation->execute(dynamic_cast<ElementAccess*>(this));
 }
 
 StatementList::StatementList()

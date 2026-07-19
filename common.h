@@ -4,6 +4,7 @@
 #include <vector>
 #include <iostream>
 #include <string>
+#include <memory>
 #include "unordered_map"
 #include "token.h"
 

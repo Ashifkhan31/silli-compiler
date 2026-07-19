@@ -202,24 +202,36 @@ ASTnode* Parser::block()
 ASTnode* Parser::varDeclaration()
 {
     Token* dataType = consume();
+
+    bool isArray = false;
+    if (check(TokenType::LEFT_BRACKET))
+    {
+        consume();
+        consume(TokenType::RIGHT_BRACKET, "Expect ']' in variable array declaration.");
+        isArray = true;
+    }
+    
     Token* name = consume(TokenType::IDENTIFIER, "Expect name in variable declaration.");
 
-    consume(TokenType::EQUAL, "Expect '=' after name.");
-    ASTnode* expr = logical();
-
+    ASTnode* expr = nullptr;
+    if (check(TokenType::EQUAL))
+    {
+        consume();
+        expr = logical();
+    }
+    
     std::string str{name->start, name->length};
-    return new VarDecl(dataType, str, expr, name);
+    return new VarDecl(dataType, isArray, str, expr, name);
 }
 
 ASTnode* Parser::setVar()
 {
-    consume();
-    Token* name = consume(TokenType::IDENTIFIER, "Expect name in assigment.");
+    Token* token = consume();
+    ASTnode* var = variable();
     consume(TokenType::EQUAL, "Expected '=' after name.");
     ASTnode* expr = logical();
 
-    std::string str{name->start, name->length};
-    return new SetVar(str, expr, name);
+    return new SetVar(var, expr, token);
 }
 
 ASTnode* Parser::printStmt()
@@ -312,6 +324,36 @@ ASTnode* Parser::unary()
     return primary();
 }
 
+ASTnode* Parser::variable()
+{
+    Token* identifier = consume(TokenType::IDENTIFIER, "Expect identifier.");
+    std::string str{identifier->start, identifier->length};
+    ASTnode* base = new Name{str, identifier};
+
+    while(check(TokenType::LEFT_BRACKET))
+    {
+        if(check(TokenType::LEFT_BRACKET))
+        {
+            consume();
+            ASTnode* index = logical();
+            consume(TokenType::RIGHT_BRACKET, "Expected ']' after in element access.");
+            base = new ElementAccess{index, base, identifier};
+        }
+    }
+
+    return base;
+}
+
+Token* Parser::consumeType()
+{
+    if (check(TokenType::INT, TokenType::REAL) || check(TokenType::BOOL, TokenType::CHAR))
+    {
+        return consume();
+    }
+    
+    throw Error{&tokens[current], "Expected a type."};
+}
+
 ASTnode* Parser::primary()
 {   
     if (check(TokenType::INTEGER))
@@ -335,12 +377,12 @@ ASTnode* Parser::primary()
         return new Character(c, token);
     }
 
-    // if (check(TokenType::STRING))
-    // {
-    //     Token* token = consume();
-    //     std::string str{token->start + 1, token->length - 2};
-    //     return new String(str, token);
-    // }
+    if (check(TokenType::STRING))
+    {
+        Token* token = consume();
+        std::string str{token->start + 1, token->length - 2};
+        return new String(str, token);
+    }
 
     if (check(TokenType::TRUE, TokenType::FALSE))
     {
@@ -351,9 +393,33 @@ ASTnode* Parser::primary()
     
     if (check(TokenType::IDENTIFIER))
     {
+        return variable();
+    }
+
+    if(check(TokenType::LEFT_BRACE))
+    {
         Token* token = consume();
-        std::string str{token->start, token->length};
-        return new Name{str, token};
+        Array* node = new Array{token};
+
+        while(true)
+        {
+            std::unique_ptr<ASTnode> element{logical()};
+            node->elements.push_back(std::move(element));
+            if(!check(TokenType::COMMA)) break;
+            consume();
+        }
+
+        consume(TokenType::RIGHT_BRACE, "Expect '}' at the end of the array.");
+        return node;
+    }
+
+    if(check(TokenType::LEFT_BRACKET))
+    {
+        consume();
+        Token* type = consumeType();
+        ASTnode* node = logical();
+        consume(TokenType::RIGHT_BRACKET, "']'.");
+        return new VariableLengthArray{type, node};
     }
     
     throw Error{&tokens[current], "An expression is expected."};

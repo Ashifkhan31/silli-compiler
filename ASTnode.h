@@ -28,11 +28,15 @@ class ASTnode
     ASTnode() {}
 };
 
+class ElementAccess;
 class Name;
 class Integer;
 class Double;
 class Character;
 class Boolean;
+class Array;
+class String;
+class VariableLengthArray;
 class Unary;
 class Factor;
 class Term;
@@ -62,6 +66,9 @@ class AstnodeOperator
     virtual ASTvalue* execute(Double* node) = 0;
     virtual ASTvalue* execute(Character* node) = 0;
     virtual ASTvalue* execute(Boolean* node) = 0;
+    virtual ASTvalue* execute(Array* node) = 0;
+    virtual ASTvalue* execute(String* node) = 0;
+    virtual ASTvalue* execute(VariableLengthArray* node) = 0;
     virtual ASTvalue* execute(Unary* node) = 0;
     virtual ASTvalue* execute(Factor* node) = 0;
     virtual ASTvalue* execute(Term* node) = 0;
@@ -79,6 +86,19 @@ class AstnodeOperator
     virtual ASTvalue* execute(ForStatement* node) = 0;
     virtual ASTvalue* execute(BlockStatement* node) = 0;
     virtual ASTvalue* execute(Name* node) = 0;
+    virtual ASTvalue* execute(ElementAccess* node) = 0;
+};
+
+
+class ElementAccess : public ASTnode
+{
+    public:
+    std::unique_ptr<ASTnode> index;
+    std::unique_ptr<ASTnode> node;
+    Token* token;
+    
+    ElementAccess(ASTnode* _index, ASTnode* _node, Token* _token);
+    ASTvalue* execute(AstnodeOperator* operation);
 };
 
 class Integer : public ASTnode
@@ -119,6 +139,36 @@ class Boolean : public ASTnode
 
     Boolean(bool _value, Token* _token);
     ASTvalue* execute(AstnodeOperator* operation);
+};
+
+class Array : public ASTnode
+{
+    public:
+    std::vector<std::unique_ptr<ASTnode>> elements;
+    Token* token;
+
+    Array(Token* _token);
+    ASTvalue* execute(AstnodeOperator* operation);  
+};
+
+class String : public ASTnode
+{
+    public:
+    Token* token;
+    std::string str;
+
+    String(std::string _str, Token* _token);
+    ASTvalue* execute(AstnodeOperator* operation);  
+};
+
+class VariableLengthArray : public ASTnode
+{
+    public:
+    Token* token;
+    std::unique_ptr<ASTnode> size;
+
+    VariableLengthArray(Token* _token, ASTnode* _size);
+    ASTvalue* execute(AstnodeOperator* operation);  
 };
 
 class Unary : public ASTnode
@@ -199,22 +249,23 @@ class VarDecl : public ASTnode
 {
     public:
     Token* dataType;
+    bool isArray;
     std::string name;
     Token* token;
     std::unique_ptr<ASTnode> expr;
 
-    VarDecl(Token* _dataType, std::string _name, ASTnode* _expr, Token* _token);
+    VarDecl(Token* _dataType, bool _isArray, std::string _name, ASTnode* _expr, Token* _token);
     ASTvalue* execute(AstnodeOperator* operation);
 };
 
 class SetVar : public ASTnode
 {
     public:
-    std::string name;
+    std::unique_ptr<ASTnode> variable;
     std::unique_ptr<ASTnode> expr;
     Token* token;
 
-    SetVar(std::string _name, ASTnode* _expr, Token* _token);
+    SetVar(ASTnode* _variable, ASTnode* _expr, Token* _token);
     ASTvalue* execute(AstnodeOperator* operation);
 };
 
