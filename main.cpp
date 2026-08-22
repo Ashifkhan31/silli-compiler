@@ -3,9 +3,6 @@
 
 #include "scanner.h"
 #include "parser.h"
-#include "resolver.h"
-#include "typechecker.h"
-#include "interpreter.h"
 
 int main(int argc, char** args)
 {
@@ -28,19 +25,6 @@ int main(int argc, char** args)
     std::unique_ptr<Program> root{parser.parse()};
 
     if (parser.hadError) return 0;
-
-    Resolver resolver{};
-    resolver.execute(root.get());
-
-    if (resolver.hadError) return 0;
-
-    TypeChecker typeChecker{};
-    typeChecker.execute(root.get());
-
-    if (typeChecker.hadError) return 0;
-
-    Interpreter interpreter{};
-    interpreter.execute(root.get());
     
     return 0;
 }

@@ -174,7 +174,17 @@ bool Scanner::isKeyword(TokenType& type)
                 type = TokenType::CAST;
                 return true;
             }
-            return false;
+        case 'd':
+            if (checkKeyword("o", 1, 1))
+            {
+                type = TokenType::DO;
+                return true;
+            }
+            else if (checkKeyword("ef", 1, 2))
+            {
+                type = TokenType::DEF;
+                return true;
+            }
         case 'e':
             if (checkKeyword("lse", 1, 3))
             {
@@ -186,7 +196,6 @@ bool Scanner::isKeyword(TokenType& type)
                 type = TokenType::ELIF;
                 return true;
             }
-            return false;
         case 'i':
             if (checkKeyword("f", 1, 1))
             {
@@ -198,8 +207,12 @@ bool Scanner::isKeyword(TokenType& type)
                 type = TokenType::INT;
                 return true;
             }
-            return false;
         case 'f':
+            if (checkKeyword("n", 1, 1))
+            {
+                type = TokenType::FN;
+                return true;
+            }
             if (checkKeyword("un", 1, 2))
             {
                 type = TokenType::FUN;
@@ -215,7 +228,6 @@ bool Scanner::isKeyword(TokenType& type)
                 type = TokenType::FALSE;
                 return true;
             }
-            return false;
         case 's':
             if (checkKeyword("truct", 1, 5))
             {
@@ -227,7 +239,6 @@ bool Scanner::isKeyword(TokenType& type)
                 type = TokenType::SET;
                 return true;
             }
-            return false;
     }
 
     return false;
@@ -316,6 +327,9 @@ void Scanner::scanTokens()
             return;
         case ']':
             consume(TokenType::RIGHT_BRACKET);
+            return;
+        case '&':
+            consume(TokenType::AMPERSAND);
             return;
         case '=':
             if(peek() == '=')

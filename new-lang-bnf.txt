@@ -7,16 +7,16 @@ declist -> eof;
 
 decl -> varstmt semi;
 
-decl -> def identifier lp paramlist rp identifier block;
+decl -> def identifier lp paramlist rp type block;
 
 decl -> struct identifier lb varlist rb;
 varlist -> varstmt semi varlist;
 varlist -> ;
 
-paramlist -> identifier identifer paramtail;
+paramlist -> type identifer paramtail;
 paramlist -> ;
 
-paramtail -> comma identifier identifier paramtail;
+paramtail -> comma type identifier paramtail;
 paramtail -> ;
 
 stmtlist -> stmt semi stmtlist;
@@ -32,29 +32,29 @@ stmt -> break;
 stmt -> continue;
 
 type -> identifier isArray isref;
-isArray -> lb rb;
+
+type -> fn type less argtypes great isArray isRef;
+
+argtypes -> type argtypestail;
+argtypes -> ;
+argtypestail -> comma type argtypestail;
+argtypestail -> ;
+
+isArray -> ls rs;
 isArray -> ;
 isref -> ampersand;
 isref-> ;
 
 varstmt -> type identifier varinit;
 
-varstmt -> fn type identifier argtypes varinit;
-  
-argtypes -> type argtypes;
-argtypes -> ; 
-
 varinit -> equal logic;
 varinit -> ;
 
-assignstmt -> set variable index equal logic;
-
-index -> lb logic rb;
-index -> ;
+assignstmt -> set variable equal logic;
 
 exprstmt -> do logic;
 
-block -> lb stmtlist rb;
+blockstmt -> lb stmtlist rb;
 
 whilestmt -> while lp logic rp block;
 
@@ -116,6 +116,7 @@ value -> string;
 value -> true;
 value -> false;
 value -> array;
+value -> dot identifier lb arglist rb;
 value -> variable;
 
 array -> lb logic arrayelements rb;
@@ -125,7 +126,6 @@ arrayelements -> ;
 
 array -> ls identifier logic rs;
 
-variable -> dot identifier lb arglist rb;
 variable -> identifier variabletail;
 
 variabletail -> ls logic rs variabletail;
@@ -137,8 +137,6 @@ arglist -> ;
 argtail -> comma logic argtail;
 argtail -> ;
 
-variabletail -> dot variable;
-
+variabletail -> dot identifier variabletail;
 variabletail -> ;
-
 

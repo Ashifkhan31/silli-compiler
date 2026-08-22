@@ -20,40 +20,48 @@ class ASTvalue
 class ASTnode
 {
     public:
-    std::unique_ptr<TypeClass> typeClass; 
+    std::unique_ptr<TypeClass> typeClass;
+    Token* token; 
         
-    virtual ASTvalue* execute(AstnodeOperator* operation) = 0;
+    virtual std::unique_ptr<ASTvalue> execute(AstnodeOperator* operation) = 0;
 
     protected:
-    ASTnode() {}
+    ASTnode(Token* _token) {}
 };
 
-class ElementAccess;
-class Name;
+class Program;
+class Int;
+class Real;
+class Char;
+class Bool;
+class TypeName;
+class IsArray;
+class IsReference;
+class FnType;
 class Integer;
 class Double;
 class Character;
 class Boolean;
 class Array;
 class String;
-class VariableLengthArray;
-class Unary;
-class Factor;
-class Term;
-class Relational;
-class Equivalent;
-class Logical;
+class ArrayAllocation;
+class StructValue;
+class Identifier;
+class ArrayElementAccess;
+class StructElementAccess;
+class Call;
+class UnaryOperation;
+class BinaryOperation;
 class VarDecl;
-class SetVar;
-class PrintStmt;
-class BlockStatement;
-class IfStatement;
-class ElifStatement;
-class ElseStatement;
-class WhileStatement;
-class ForStatement;
+class AssignmentStatement;
+class ExpressionStatement;
 class StatementList;
-class Program;
+class Block;
+class Parameter;
+class FunDeclaration;
+class VarList;
+class StructDeclaration;
+class DeclarationList;
 
 class AstnodeOperator
 {
@@ -61,179 +69,40 @@ class AstnodeOperator
     AstnodeOperator(){}
 
     public:
-    virtual ASTvalue* execute(Program* node) = 0;
-    virtual ASTvalue* execute(Integer* node) = 0;
-    virtual ASTvalue* execute(Double* node) = 0;
-    virtual ASTvalue* execute(Character* node) = 0;
-    virtual ASTvalue* execute(Boolean* node) = 0;
-    virtual ASTvalue* execute(Array* node) = 0;
-    virtual ASTvalue* execute(String* node) = 0;
-    virtual ASTvalue* execute(VariableLengthArray* node) = 0;
-    virtual ASTvalue* execute(Unary* node) = 0;
-    virtual ASTvalue* execute(Factor* node) = 0;
-    virtual ASTvalue* execute(Term* node) = 0;
-    virtual ASTvalue* execute(Relational* node) = 0;
-    virtual ASTvalue* execute(Equivalent* node) = 0;
-    virtual ASTvalue* execute(Logical* node) = 0;
-    virtual ASTvalue* execute(VarDecl* node) = 0;
-    virtual ASTvalue* execute(SetVar* node) = 0;
-    virtual ASTvalue* execute(PrintStmt* node) = 0;
-    virtual ASTvalue* execute(StatementList* node) = 0;
-    virtual ASTvalue* execute(IfStatement* node) = 0;
-    virtual ASTvalue* execute(ElseStatement* node) = 0;
-    virtual ASTvalue* execute(ElifStatement* node) = 0;
-    virtual ASTvalue* execute(WhileStatement* node) = 0;
-    virtual ASTvalue* execute(ForStatement* node) = 0;
-    virtual ASTvalue* execute(BlockStatement* node) = 0;
-    virtual ASTvalue* execute(Name* node) = 0;
-    virtual ASTvalue* execute(ElementAccess* node) = 0;
-};
 
-
-class ElementAccess : public ASTnode
-{
-    public:
-    std::unique_ptr<ASTnode> index;
-    std::unique_ptr<ASTnode> node;
-    Token* token;
-    
-    ElementAccess(ASTnode* _index, ASTnode* _node, Token* _token);
-    ASTvalue* execute(AstnodeOperator* operation);
-};
-
-class Integer : public ASTnode
-{
-    public:
-    int number;
-    Token* token;
-
-    Integer(int _number, Token* _token);
-    ASTvalue* execute(AstnodeOperator* operation);
-};
-
-class Double : public ASTnode
-{
-    public:
-    double number;
-    Token* token;
-
-    Double(double _number, Token* _token);
-    ASTvalue* execute(AstnodeOperator* operation);
-};
-
-class Character : public ASTnode
-{
-    public:
-    char c;
-    Token* token;
-
-    Character(char _c, Token* _token);
-    ASTvalue* execute(AstnodeOperator* operation);
-};
-
-class Boolean : public ASTnode
-{
-    public:
-    bool value;
-    Token* token;
-
-    Boolean(bool _value, Token* _token);
-    ASTvalue* execute(AstnodeOperator* operation);
-};
-
-class Array : public ASTnode
-{
-    public:
-    std::vector<std::unique_ptr<ASTnode>> elements;
-    Token* token;
-
-    Array(Token* _token);
-    ASTvalue* execute(AstnodeOperator* operation);  
-};
-
-class String : public ASTnode
-{
-    public:
-    Token* token;
-    std::string str;
-
-    String(std::string _str, Token* _token);
-    ASTvalue* execute(AstnodeOperator* operation);  
-};
-
-class VariableLengthArray : public ASTnode
-{
-    public:
-    Token* token;
-    std::unique_ptr<ASTnode> size;
-
-    VariableLengthArray(Token* _token, ASTnode* _size);
-    ASTvalue* execute(AstnodeOperator* operation);  
-};
-
-class Unary : public ASTnode
-{
-    public:
-    std::unique_ptr<ASTnode> child;
-    Token* token;
-
-    Unary(ASTnode* _child, Token* _token);
-    ASTvalue* execute(AstnodeOperator* operation);
-};
-
-class Factor : public ASTnode
-{
-    public:
-    std::unique_ptr<ASTnode> left;
-    std::unique_ptr<ASTnode> right;
-    Token* token;
-
-    Factor(ASTnode* _left, ASTnode* _right, Token* _token);
-    ASTvalue* execute(AstnodeOperator* operation);
-};
-
-class Term : public ASTnode
-{
-    public:
-    std::unique_ptr<ASTnode> left;
-    std::unique_ptr<ASTnode> right;
-    Token* token;
-
-    Term(ASTnode* _left, ASTnode* _right, Token* _token);
-    ASTvalue* execute(AstnodeOperator* operation);
-};
-
-class Relational : public ASTnode
-{
-    public:
-    std::unique_ptr<ASTnode> left;
-    std::unique_ptr<ASTnode> right;
-    Token* token;
-
-    Relational(ASTnode* _left, ASTnode* _right, Token* _token);
-    ASTvalue* execute(AstnodeOperator* operation);
-};
-
-class Equivalent : public ASTnode
-{
-    public:
-    std::unique_ptr<ASTnode> left;
-    std::unique_ptr<ASTnode> right;
-    Token* token;
-
-    Equivalent(ASTnode* _left, ASTnode* _right, Token* _token);
-    ASTvalue* execute(AstnodeOperator* operation);
-};
-
-class Logical : public ASTnode
-{
-    public:
-    std::unique_ptr<ASTnode> left;
-    std::unique_ptr<ASTnode> right;
-    Token* token;
-
-    Logical(ASTnode* _left, ASTnode* _right, Token* _token);
-    ASTvalue* execute(AstnodeOperator* operation);
+    virtual std::unique_ptr<ASTvalue> execute(Program* node) = 0;
+    virtual std::unique_ptr<ASTvalue> execute(Int* node) = 0;
+    virtual std::unique_ptr<ASTvalue> execute(Real* node) = 0;
+    virtual std::unique_ptr<ASTvalue> execute(Char* node) = 0;
+    virtual std::unique_ptr<ASTvalue> execute(Bool* node) = 0;
+    virtual std::unique_ptr<ASTvalue> execute(TypeName* node) = 0;
+    virtual std::unique_ptr<ASTvalue> execute(FnType* node) = 0;
+    virtual std::unique_ptr<ASTvalue> execute(IsArray* node) = 0;
+    virtual std::unique_ptr<ASTvalue> execute(IsReference* node) = 0;
+    virtual std::unique_ptr<ASTvalue> execute(Integer* node) = 0;
+    virtual std::unique_ptr<ASTvalue> execute(Double* node) = 0;
+    virtual std::unique_ptr<ASTvalue> execute(Character* node) = 0;
+    virtual std::unique_ptr<ASTvalue> execute(Boolean* node) = 0;
+    virtual std::unique_ptr<ASTvalue> execute(Array* node) = 0;
+    virtual std::unique_ptr<ASTvalue> execute(String* node) = 0;
+    virtual std::unique_ptr<ASTvalue> execute(ArrayAllocation* node) = 0;
+    virtual std::unique_ptr<ASTvalue> execute(StructValue* node) = 0;
+    virtual std::unique_ptr<ASTvalue> execute(Identifier* node) = 0;
+    virtual std::unique_ptr<ASTvalue> execute(ArrayElementAccess* node) = 0;
+    virtual std::unique_ptr<ASTvalue> execute(StructElementAccess* node) = 0;
+    virtual std::unique_ptr<ASTvalue> execute(Call* node) = 0;
+    virtual std::unique_ptr<ASTvalue> execute(UnaryOperation* node) = 0;
+    virtual std::unique_ptr<ASTvalue> execute(BinaryOperation* node) = 0;
+    virtual std::unique_ptr<ASTvalue> execute(VarDecl* node) = 0; 
+    virtual std::unique_ptr<ASTvalue> execute(AssignmentStatement* node) = 0; 
+    virtual std::unique_ptr<ASTvalue> execute(ExpressionStatement* node) = 0; 
+    virtual std::unique_ptr<ASTvalue> execute(StatementList* node) = 0; 
+    virtual std::unique_ptr<ASTvalue> execute(Block* node) = 0; 
+    virtual std::unique_ptr<ASTvalue> execute(Parameter* node) = 0; 
+    virtual std::unique_ptr<ASTvalue> execute(FunDeclaration* node) = 0; 
+    virtual std::unique_ptr<ASTvalue> execute(VarList* node) = 0; 
+    virtual std::unique_ptr<ASTvalue> execute(StructDeclaration* node) = 0; 
+    virtual std::unique_ptr<ASTvalue> execute(DeclarationList* node) = 0; 
 };
 
 class Program : public ASTnode
@@ -241,129 +110,329 @@ class Program : public ASTnode
     public:
     std::unique_ptr<ASTnode> node;
 
-    Program(ASTnode* _node);
-    ASTvalue* execute(AstnodeOperator* operation);
+    Program(std::unique_ptr<ASTnode> _node, Token* _token);
+    std::unique_ptr<ASTvalue> execute(AstnodeOperator* operation);
+};
+
+class Int : public ASTnode
+{
+    public:
+
+    Int(Token* _token);
+    std::unique_ptr<ASTvalue> execute(AstnodeOperator* operation);
+};
+
+class Real : public ASTnode
+{
+    public:
+
+    Real(Token* _token);
+    std::unique_ptr<ASTvalue> execute(AstnodeOperator* operation);
+};
+
+class Char : public ASTnode
+{
+    public:
+
+    Char(Token* _token);
+    std::unique_ptr<ASTvalue> execute(AstnodeOperator* operation);
+};
+
+class Bool : public ASTnode
+{
+    public:
+
+    Bool(Token* _token);
+    std::unique_ptr<ASTvalue> execute(AstnodeOperator* operation);
+};
+
+class TypeName : public ASTnode
+{
+    public:
+    std::string name;
+    
+    TypeName(std::string _name, Token* _token);
+    std::unique_ptr<ASTvalue> execute(AstnodeOperator* operation);
+};
+
+class FnType : public ASTnode
+{
+    public:
+    std::unique_ptr<ASTnode> returnType;
+    std::vector<std::unique_ptr<ASTnode>> paramTypes;
+    
+    FnType(std::unique_ptr<ASTnode> _returnType,
+           std::vector<std::unique_ptr<ASTnode>> _paramTypes,
+           Token* _token);
+
+    std::unique_ptr<ASTvalue> execute(AstnodeOperator* operation);
+};
+
+class IsArray : public ASTnode
+{
+    public:
+    std::unique_ptr<ASTnode> type;
+    
+    IsArray(std::unique_ptr<ASTnode> _type, Token* _token);
+    std::unique_ptr<ASTvalue> execute(AstnodeOperator* operation);
+};
+
+class IsReference : public ASTnode
+{
+    public:
+    std::unique_ptr<ASTnode> type;
+    
+    IsReference(std::unique_ptr<ASTnode> _type, Token* _token);
+    std::unique_ptr<ASTvalue> execute(AstnodeOperator* operation);
+};
+
+class Integer : public ASTnode
+{
+    public:
+    int number;
+
+    Integer(int _number, Token* _token);
+    std::unique_ptr<ASTvalue> execute(AstnodeOperator* operation);
+};
+
+class Double : public ASTnode
+{
+    public:
+    double number;
+
+    Double(double _number, Token* _token);
+    std::unique_ptr<ASTvalue> execute(AstnodeOperator* operation);
+};
+
+class Character : public ASTnode
+{
+    public:
+    char c;
+
+    Character(char _c, Token* _token);
+    std::unique_ptr<ASTvalue> execute(AstnodeOperator* operation);
+};
+
+class Boolean : public ASTnode
+{
+    public:
+    bool truthValue;
+
+    Boolean(bool _truthValue, Token* _token);
+    std::unique_ptr<ASTvalue> execute(AstnodeOperator* operation);
+};
+
+class Array : public ASTnode
+{
+    public:
+    std::vector<std::unique_ptr<ASTnode>> elements;
+
+    Array(std::vector<std::unique_ptr<ASTnode>> _elements, Token* _token);
+    std::unique_ptr<ASTvalue> execute(AstnodeOperator* operation);
+};
+
+class String : public ASTnode
+{
+    public:
+    std::string str;
+
+    String(std::string _str, Token* _token);
+    std::unique_ptr<ASTvalue> execute(AstnodeOperator* operation);
+};
+
+class ArrayAllocation : public ASTnode
+{
+    public:
+    std::unique_ptr<ASTnode> type;
+    std::unique_ptr<ASTnode> size;
+
+    ArrayAllocation(std::unique_ptr<ASTnode> _type, std::unique_ptr<ASTnode> _size, Token* _token);
+    std::unique_ptr<ASTvalue> execute(AstnodeOperator* operation);
+};
+
+class StructValue : public ASTnode
+{
+    public:
+    std::string structName;
+    std::vector<std::unique_ptr<ASTnode>> elements;
+
+    StructValue(std::string _structName,
+                std::vector<std::unique_ptr<ASTnode>> _elements,
+                Token* _token);
+    
+    std::unique_ptr<ASTvalue> execute(AstnodeOperator* operation);
+};
+
+class Identifier : public ASTnode
+{
+    public:
+    std::string name;
+
+    Identifier(std::string _name, Token* _token);
+    std::unique_ptr<ASTvalue> execute(AstnodeOperator* operation);
+};
+
+class ArrayElementAccess : public ASTnode
+{
+    public:
+    std::unique_ptr<ASTnode> array;
+    std::unique_ptr<ASTnode> index;
+
+    ArrayElementAccess(std::unique_ptr<ASTnode> _array, std::unique_ptr<ASTnode> index,
+                       Token* _token);
+    
+    std::unique_ptr<ASTvalue> execute(AstnodeOperator* operation);
+};
+
+class StructElementAccess: public ASTnode
+{
+    public:
+    std::unique_ptr<ASTnode> base;
+    std::string name;
+
+    StructElementAccess(std::unique_ptr<ASTnode> _base, std::string _name, Token* _token);
+    std::unique_ptr<ASTvalue> execute(AstnodeOperator* operation);
+};
+
+class Call : public ASTnode
+{
+    public:
+    std::unique_ptr<ASTnode> base;
+    std::vector<std::unique_ptr<ASTnode>> args;
+    
+    Call(std::unique_ptr<ASTnode> _base,
+         std::vector<std::unique_ptr<ASTnode>> _args,
+         Token* _token);
+
+    std::unique_ptr<ASTvalue> execute(AstnodeOperator* operation);
+};
+
+class UnaryOperation : public ASTnode
+{
+    public:
+    std::unique_ptr<ASTnode> value;
+    
+    UnaryOperation(std::unique_ptr<ASTnode> _value, Token* _token);
+
+    std::unique_ptr<ASTvalue> execute(AstnodeOperator* operation);
+};
+
+class BinaryOperation : public ASTnode
+{
+    public:
+    std::unique_ptr<ASTnode> left;
+    std::unique_ptr<ASTnode> right;
+    
+    BinaryOperation(std::unique_ptr<ASTnode> _left, std::unique_ptr<ASTnode> _right, Token* _token);
+
+    std::unique_ptr<ASTvalue> execute(AstnodeOperator* operation);
 };
 
 class VarDecl : public ASTnode
 {
     public:
-    Token* dataType;
-    bool isArray;
+    std::unique_ptr<ASTnode> type;
     std::string name;
-    Token* token;
     std::unique_ptr<ASTnode> expr;
-
-    VarDecl(Token* _dataType, bool _isArray, std::string _name, ASTnode* _expr, Token* _token);
-    ASTvalue* execute(AstnodeOperator* operation);
+    
+    VarDecl(std::unique_ptr<ASTnode> _type, std::string _name,
+            std::unique_ptr<ASTnode> _expr, Token* _token);
+    
+    std::unique_ptr<ASTvalue> execute(AstnodeOperator* operation);
 };
 
-class SetVar : public ASTnode
+class AssignmentStatement : public ASTnode
 {
     public:
     std::unique_ptr<ASTnode> variable;
     std::unique_ptr<ASTnode> expr;
-    Token* token;
+    
+    AssignmentStatement(std::unique_ptr<ASTnode> _variable,
+                        std::unique_ptr<ASTnode> _expr, Token* _token);
+    
+    std::unique_ptr<ASTvalue> execute(AstnodeOperator* operation);
+};
 
-    SetVar(ASTnode* _variable, ASTnode* _expr, Token* _token);
-    ASTvalue* execute(AstnodeOperator* operation);
+class ExpressionStatement : public ASTnode
+{
+    public:
+    std::unique_ptr<ASTnode> expr;
+    
+    ExpressionStatement(std::unique_ptr<ASTnode> _expr, Token* _token);
+    std::unique_ptr<ASTvalue> execute(AstnodeOperator* operation);
 };
 
 class StatementList : public ASTnode
 {
     public:
-    std::vector<std::unique_ptr<ASTnode>> list;
-
-    StatementList();
-    ASTvalue* execute(AstnodeOperator* operation);
+    std::vector<std::unique_ptr<ASTnode>> statements;
+    
+    StatementList(std::vector<std::unique_ptr<ASTnode>> _statements, Token* _token);
+    std::unique_ptr<ASTvalue> execute(AstnodeOperator* operation);
 };
 
-class BlockStatement : public ASTnode
+class Block : public ASTnode
 {
     public:
-    std::unique_ptr<ASTnode> stmtList;
-
-    BlockStatement(ASTnode* _stmtList);
-    ASTvalue* execute(AstnodeOperator* operation);
+    std::unique_ptr<ASTnode> list;
+    
+    Block(std::unique_ptr<ASTnode> _list, Token* _token);
+    std::unique_ptr<ASTvalue> execute(AstnodeOperator* operation);
 };
 
-class Name : public ASTnode
+class Parameter : public ASTnode
+{    
+    public:
+    std::unique_ptr<ASTnode> type;
+    std::string name;
+    
+    Parameter(std::unique_ptr<ASTnode> _type, std::string _name, Token* _token);
+    std::unique_ptr<ASTvalue> execute(AstnodeOperator* operation);
+};
+
+class FunDeclaration : public ASTnode
 {
     public:
     std::string name;
-    Token* token;
+    std::vector<std::unique_ptr<ASTnode>> params;
+    std::unique_ptr<ASTnode> returnType;
+    std::unique_ptr<ASTnode> block;
     
-    Name(std::string _name, Token* _token);
-    ASTvalue* execute(AstnodeOperator* operation);
+    FunDeclaration(std::string _name,
+                   std::vector<std::unique_ptr<ASTnode>> _params,
+                   std::unique_ptr<ASTnode> _returnType,
+                   std::unique_ptr<ASTnode> _block,
+                   Token* _token);
+
+    std::unique_ptr<ASTvalue> execute(AstnodeOperator* operation);
 };
 
-class PrintStmt : public ASTnode
+class VarList : public ASTnode
 {
     public:
-    std::unique_ptr<ASTnode> expr;
+    std::vector<std::unique_ptr<ASTnode>> varStatments;  
 
-    PrintStmt(ASTnode* _expr);
-    ASTvalue* execute(AstnodeOperator* operation);
+    VarList(std::vector<std::unique_ptr<ASTnode>> _varStatements, Token* _token);
+    std::unique_ptr<ASTvalue> execute(AstnodeOperator* operation);
 };
 
-class IfStatement : public ASTnode
+class StructDeclaration : public ASTnode
 {
     public:
-    std::unique_ptr<ASTnode> condition;
-    std::unique_ptr<ASTnode> block;
-    std::unique_ptr<ASTnode> tail;
-    Token* token;
-
-    IfStatement(ASTnode* _condition, ASTnode* _block, ASTnode* _tail, Token* _token);
-    ASTvalue* execute(AstnodeOperator* operation);
-};
-
-class ElifStatement : public ASTnode
-{
-    public:
-    std::unique_ptr<ASTnode> condition;
-    std::unique_ptr<ASTnode> block;
-    std::unique_ptr<ASTnode> tail;
-    Token* token;
-
-    ElifStatement(ASTnode* _condition, ASTnode* _block, ASTnode* _tail, Token* _token);
-    ASTvalue* execute(AstnodeOperator* operation);
-};
-
-class ElseStatement : public ASTnode
-{
-    public:
-    std::unique_ptr<ASTnode> block;
-    Token* token;
-
-    ElseStatement(ASTnode* _block, Token* _token);
-    ASTvalue* execute(AstnodeOperator* operation);
-};
-
-class WhileStatement : public ASTnode
-{
-    public:
-    std::unique_ptr<ASTnode> condition;
-    std::unique_ptr<ASTnode> block;
-    Token* token;
-
-    WhileStatement(ASTnode* _condition, ASTnode* _block, Token* _token);
-    ASTvalue* execute(AstnodeOperator* operation);
-};
-
-class ForStatement : public ASTnode
-{
-    public:
-    std::unique_ptr<ASTnode> initializer;
-    std::unique_ptr<ASTnode> condition;
-    std::unique_ptr<ASTnode> updator;
-    std::unique_ptr<ASTnode> block;
-    Token* token;
-
-    ForStatement(ASTnode* _initialzer, ASTnode* _condition ,ASTnode* _updator,
-                 ASTnode* _block, Token* _token);
+    std::string name;
+    std::unique_ptr<ASTnode> varList;
     
-    ASTvalue* execute(AstnodeOperator* operation);
+    StructDeclaration(std::string _name, std::unique_ptr<ASTnode> _varlist, Token* _token);
+    std::unique_ptr<ASTvalue> execute(AstnodeOperator* operation);
+};
+
+class DeclarationList : public ASTnode
+{
+    public:
+    std::vector<std::unique_ptr<ASTnode>> declarations;
+    
+    DeclarationList(std::vector<std::unique_ptr<ASTnode>> _declarations, Token* _token);
+    std::unique_ptr<ASTvalue> execute(AstnodeOperator* operation);
 };
 
 #endif
