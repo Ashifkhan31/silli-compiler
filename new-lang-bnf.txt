@@ -5,6 +5,8 @@ S -> declist;
 declist -> decl declist;
 declist -> eof;
 
+decl -> refer string;
+
 decl -> varstmt semi;
 
 decl -> def identifier lp paramlist rp type block;
@@ -118,6 +120,8 @@ value -> false;
 value -> array;
 value -> dot identifier lb arglist rb;
 value -> variable;
+value -> cast less type great lp logic rp;
+value -> lp logic rp;
 
 array -> lb logic arrayelements rb;
 
@@ -139,4 +143,3 @@ argtail -> ;
 
 variabletail -> dot identifier variabletail;
 variabletail -> ;
-

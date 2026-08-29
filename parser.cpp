@@ -23,7 +23,11 @@ std::unique_ptr<ASTnode> Parser::declarationList()
     std::vector<std::unique_ptr<ASTnode>> list;
     while (true)
     {
-        if (isBasicType() || isUserType())
+        if (check(TokenType::REFER))
+        {
+            list.push_back(referDeclaration());
+        }
+        else if (isBasicType() || isUserType())
         {
             list.push_back(varDeclaration(true));
         }
@@ -42,6 +46,14 @@ std::unique_ptr<ASTnode> Parser::declarationList()
     }
     consume(TokenType::END, "Expected EOF.");    
     return std::make_unique<DeclarationList>(std::move(list), &tokens[current]);
+}
+
+std::unique_ptr<ASTnode> Parser::referDeclaration()
+{
+    Token* token = consume();
+    Token* pathToken = consume(TokenType::STRING, "Expected path to a source file.");
+    std::string path{pathToken->start, pathToken->length};
+    return std::make_unique<ReferDeclaration>(path, token);
 }
 
 std::unique_ptr<ASTnode> Parser::structDeclaration()
@@ -133,6 +145,26 @@ std::unique_ptr<ASTnode> Parser::statementList()
         {
             list.push_back(expressionStatement(true));
         }
+        else if (check(TokenType::WHILE))
+        {
+            list.push_back(whileStatement());
+        }
+        else if (check(TokenType::FOR))
+        {
+            list.push_back(forStatement());
+        }
+        else if (check(TokenType::IF))
+        {
+            list.push_back(ifStatement());
+        }
+        else if (check(TokenType::BREAK))
+        {
+            list.push_back(breakStatement());
+        }
+        else if (check(TokenType::CONTINUE))
+        {
+            list.push_back(continueStatement());
+        }
         else
         {
             break;
@@ -160,6 +192,87 @@ std::unique_ptr<ASTnode> Parser::expressionStatement(bool semicolon)
 
     if (semicolon) consume(TokenType::SEMI_COLON, "Expected semicolon after statement.");
     return std::make_unique<ExpressionStatement>(std::move(expr), token);
+}
+
+std::unique_ptr<ASTnode> Parser::whileStatement()
+{
+    Token* token = consume();
+    std::unique_ptr<ASTnode> condition = parseCondition();
+    std::unique_ptr<ASTnode> body = blockStatement();
+    return std::make_unique<WhileStatement>(std::move(condition), std::move(body), token);
+}
+
+std::unique_ptr<ASTnode> Parser::forStatement()
+{
+    Token* token = consume();
+    consume(TokenType::LEFT_PAREN, "Expected '(' before condition.");
+
+    std::unique_ptr<ASTnode> init = isBasicType() || isUserType() ? varDeclaration(false) : nullptr;
+    consume(TokenType::SEMI_COLON, "");
+
+    std::unique_ptr<ASTnode> condition = !check(TokenType::SEMI_COLON) ? logical() : nullptr;
+    consume(TokenType::SEMI_COLON, "");
+
+    std::unique_ptr<ASTnode> update = check(TokenType::SET) ? assignmentStatement(false) : nullptr;
+    
+    consume(TokenType::RIGHT_PAREN, "Expected ')' after condition.");
+    std::unique_ptr<ASTnode> body = blockStatement();
+    return std::make_unique<ForStatement>(std::move(init), std::move(condition), std::move(update),
+                                          std::move(body), token);
+}
+
+std::unique_ptr<ASTnode> Parser::ifStatement()
+{
+    Token* token = consume();
+    std::unique_ptr<ASTnode> condition = parseCondition();
+    std::unique_ptr<ASTnode> body = blockStatement();
+    std::unique_ptr<ASTnode> tail = ifTail();
+
+    return std::make_unique<IfStatement>(std::move(condition), std::move(body),
+                                         std::move(tail), token);
+}
+
+std::unique_ptr<ASTnode> Parser::ifTail()
+{
+    if (check(TokenType::ELIF))
+    {
+        Token* token = consume();
+        std::unique_ptr<ASTnode> condition = parseCondition();
+        std::unique_ptr<ASTnode> body = blockStatement();
+        std::unique_ptr<ASTnode> tail = ifTail();
+
+        return std::make_unique<ElifStatement>(std::move(condition), std::move(body),
+                                               std::move(tail), token);
+    }
+    if (check(TokenType::ELSE))
+    {
+        Token* token = consume();
+        std::unique_ptr<ASTnode> body = blockStatement();
+        return std::make_unique<ElseStatement>(std::move(body), token);
+    }
+    return nullptr;
+}
+
+std::unique_ptr<ASTnode> Parser::breakStatement()
+{
+    Token* token = consume();
+    consume(TokenType::SEMI_COLON, "Expected ';' at the end of break statement");
+    return std::make_unique<BreakStatement>(token);
+}
+
+std::unique_ptr<ASTnode> Parser::continueStatement()
+{
+    Token* token = consume();
+    consume(TokenType::SEMI_COLON, "Expected ';' at the end of continue statement");
+    return std::make_unique<ContinueStatement>(token);
+}
+
+std::unique_ptr<ASTnode> Parser::parseCondition()
+{
+    consume(TokenType::LEFT_PAREN, "Expected '(' before condition.");
+    std::unique_ptr<ASTnode> condition = logical();
+    consume(TokenType::RIGHT_PAREN, "Expected ')' after condition.");
+    return condition;
 }
 
 std::unique_ptr<ASTnode> Parser::varDeclaration(bool semicolon)
@@ -230,7 +343,7 @@ std::unique_ptr<ASTnode> Parser::basicType()
         return std::make_unique<Bool>(token);
     }
 
-    throw Error(&tokens[current], "Expected a type.");
+    throw Error(&tokens[current], "Expected a basic type.");
 }
 
 bool Parser::isBasicType()
@@ -454,6 +567,29 @@ std::unique_ptr<ASTnode> Parser::functionCall(std::unique_ptr<ASTnode> base)
     return std::make_unique<Call>(std::move(base), std::move(args), token);    
 }
 
+std::unique_ptr<ASTnode> Parser::cast()
+{
+    Token* token = consume();
+
+    consume(TokenType::LESS, "Expected '<' before the type.");
+    std::unique_ptr<ASTnode> type = basicType();
+    consume(TokenType::GREAT, "Expected '>' after the type.");
+    
+    consume(TokenType::LEFT_PAREN, "Expected '(' before the expression.");
+    std::unique_ptr<ASTnode> expr = logical();
+    consume(TokenType::RIGHT_PAREN, "Expected ')' at the end.");
+
+    return std::make_unique<Cast>(std::move(type), std::move(expr), token);
+}
+
+std::unique_ptr<ASTnode> Parser::group()
+{
+    Token* token = consume();
+    std::unique_ptr<ASTnode> expr = logical();
+    consume(TokenType::RIGHT_PAREN, "Expected closing ')' after the expression");
+    return std::make_unique<Group>(std::move(expr), token);
+}
+
 std::unique_ptr<ASTnode> Parser::variable()
 {
     Token* token = consume();
@@ -539,7 +675,17 @@ std::unique_ptr<ASTnode> Parser::value()
     {
         return variable();
     }
-    
+
+    if (check(TokenType::CAST))
+    {
+        return cast();
+    }
+        
+    if (check(TokenType::LEFT_PAREN))
+    {
+        return group();
+    }
+        
     throw Error{&tokens[current], "A value is expected."};
 }
 

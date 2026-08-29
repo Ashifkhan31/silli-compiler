@@ -127,18 +127,6 @@ bool Scanner::isKeyword(TokenType& type)
                 type = TokenType::AND;
                 return true;
             }
-        case 'b':
-            if (checkKeyword("ool", 1, 3))
-            {
-                type = TokenType::BOOL;
-                return true;
-            }
-        case 'r':
-            if (checkKeyword("eal", 1, 3))
-            {
-                type = TokenType::REAL;
-                return true;
-            }
         case 't':
             if (checkKeyword("rue", 1, 3))
             {
@@ -163,6 +151,17 @@ bool Scanner::isKeyword(TokenType& type)
                 type = TokenType::PRINT;
                 return true;
             }            
+        case 'b':
+            if (checkKeyword("ool", 1, 3))
+            {
+                type = TokenType::BOOL;
+                return true;
+            }
+            else if (checkKeyword("reak", 1, 4))
+            {
+                type = TokenType::BREAK;
+                return true;
+            }
         case 'c':
             if (checkKeyword("har", 1, 3))
             {
@@ -172,6 +171,11 @@ bool Scanner::isKeyword(TokenType& type)
             else if (checkKeyword("ast", 1, 3))
             {
                 type = TokenType::CAST;
+                return true;
+            }
+            else if (checkKeyword("ontinue", 1, 7))
+            {
+                type = TokenType::CONTINUE;
                 return true;
             }
         case 'd':
@@ -226,6 +230,17 @@ bool Scanner::isKeyword(TokenType& type)
             else if (checkKeyword("alse", 1, 4))
             {
                 type = TokenType::FALSE;
+                return true;
+            }
+        case 'r':
+            if (checkKeyword("eal", 1, 3))
+            {
+                type = TokenType::REAL;
+                return true;
+            }
+            else if (checkKeyword("efer", 1, 4))
+            {
+                type = TokenType::REFER;
                 return true;
             }
         case 's':

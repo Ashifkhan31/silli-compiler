@@ -245,6 +245,28 @@ std::unique_ptr<ASTvalue> Call::execute(AstnodeOperator* operation)
     return operation->execute(dynamic_cast<Call*>(this));
 }
 
+Cast::Cast(std::unique_ptr<ASTnode> _type, std::unique_ptr<ASTnode> _expr, Token* _token)
+           : ASTnode(_token), type(std::move(_type)), expr(std::move(_expr))
+{
+    
+}
+
+std::unique_ptr<ASTvalue> Cast::execute(AstnodeOperator* operation)
+{
+    return operation->execute(dynamic_cast<Cast*>(this));
+}
+
+Group::Group(std::unique_ptr<ASTnode> _expr, Token* _token)
+             : ASTnode(_token), expr(std::move(_expr))
+{
+    
+}
+
+std::unique_ptr<ASTvalue> Group::execute(AstnodeOperator* operation)
+{
+    return operation->execute(dynamic_cast<Group*>(this));
+}
+
 BinaryOperation::BinaryOperation(std::unique_ptr<ASTnode> _left, std::unique_ptr<ASTnode> _right,
                                  Token* _token)
                                  : ASTnode(_token), left(std::move(_left)), right(std::move(_right))
@@ -327,6 +349,91 @@ std::unique_ptr<ASTvalue> Block::execute(AstnodeOperator* operation)
     return operation->execute(dynamic_cast<Block*>(this));
 }
 
+WhileStatement::WhileStatement(std::unique_ptr<ASTnode> _condition, std::unique_ptr<ASTnode> _body,
+                              Token* _token)
+                              : ASTnode(_token), condition(std::move(_condition)),
+                                body(std::move(_body))  
+{
+    
+}
+
+std::unique_ptr<ASTvalue> WhileStatement::execute(AstnodeOperator* operation)
+{
+    return operation->execute(dynamic_cast<WhileStatement*>(this));
+}
+
+ForStatement::ForStatement(std::unique_ptr<ASTnode> _init, std::unique_ptr<ASTnode> _condition,
+                           std::unique_ptr<ASTnode> _update, std::unique_ptr<ASTnode> _body,
+                           Token* _token)
+                           : ASTnode(_token), init(std::move(_init)),
+                             condition(std::move(_condition)), update(std::move(_update)),
+                             body(std::move(_body))  
+{
+    
+}
+
+std::unique_ptr<ASTvalue> ForStatement::execute(AstnodeOperator* operation)
+{
+    return operation->execute(dynamic_cast<ForStatement*>(this));
+}
+
+IfStatement::IfStatement(std::unique_ptr<ASTnode> _condition, std::unique_ptr<ASTnode> _body,
+                         std::unique_ptr<ASTnode> _tail, Token* _token)
+                         : ASTnode(_token), condition(std::move(_condition)),
+                           body(std::move(_body)), tail(std::move(_tail)) 
+{
+    
+}
+
+std::unique_ptr<ASTvalue> IfStatement::execute(AstnodeOperator* operation)
+{
+    return operation->execute(dynamic_cast<IfStatement*>(this));
+}
+
+ElifStatement::ElifStatement(std::unique_ptr<ASTnode> _condition, std::unique_ptr<ASTnode> _body,
+                         std::unique_ptr<ASTnode> _tail, Token* _token)
+                         : ASTnode(_token), condition(std::move(_condition)),
+                           body(std::move(_body)), tail(std::move(_tail)) 
+{
+    
+}
+
+std::unique_ptr<ASTvalue> ElifStatement::execute(AstnodeOperator* operation)
+{
+    return operation->execute(dynamic_cast<ElifStatement*>(this));
+}
+
+ElseStatement::ElseStatement(std::unique_ptr<ASTnode> _body, Token* _token)
+                         : ASTnode(_token), body(std::move(_body))
+{
+    
+}
+
+std::unique_ptr<ASTvalue> ElseStatement::execute(AstnodeOperator* operation)
+{
+    return operation->execute(dynamic_cast<ElseStatement*>(this));
+}
+
+BreakStatement::BreakStatement(Token* _token) : ASTnode(_token)
+{
+    
+}
+
+std::unique_ptr<ASTvalue> BreakStatement::execute(AstnodeOperator* operation)
+{
+    return operation->execute(dynamic_cast<BreakStatement*>(this));
+}
+
+ContinueStatement::ContinueStatement(Token* _token) : ASTnode(_token)
+{
+    
+}
+
+std::unique_ptr<ASTvalue> ContinueStatement::execute(AstnodeOperator* operation)
+{
+    return operation->execute(dynamic_cast<ContinueStatement*>(this));
+}
+
 Parameter::Parameter(std::unique_ptr<ASTnode> _type, std::string _name, Token* _token)
                      : ASTnode(_token), type(std::move(_type)), name(_name) 
 {
@@ -373,6 +480,16 @@ StructDeclaration::StructDeclaration(std::string _name, std::unique_ptr<ASTnode>
 std::unique_ptr<ASTvalue> StructDeclaration::execute(AstnodeOperator* operation)
 {
     return operation->execute(dynamic_cast<StructDeclaration*>(this));
+}
+
+ReferDeclaration::ReferDeclaration(std::string _path, Token* _token) : ASTnode(_token), path(_path)
+{
+    
+}
+
+std::unique_ptr<ASTvalue> ReferDeclaration::execute(AstnodeOperator* operation)
+{
+    return operation->execute(dynamic_cast<ReferDeclaration*>(this));
 }
 
 DeclarationList::DeclarationList(std::vector<std::unique_ptr<ASTnode>> _declarations, Token* _token)

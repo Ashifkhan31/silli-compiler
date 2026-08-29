@@ -30,7 +30,9 @@ class Parser
     std::unique_ptr<ASTnode> whileStatement();
     std::unique_ptr<ASTnode> forStatement();
 
+    std::unique_ptr<ASTnode> parseCondition();
     std::unique_ptr<ASTnode> ifStatement();
+    std::unique_ptr<ASTnode> ifTail();
 
     std::unique_ptr<ASTnode> breakStatement();
     std::unique_ptr<ASTnode> continueStatement();
@@ -42,6 +44,7 @@ class Parser
     std::unique_ptr<ASTnode> factor();
     std::unique_ptr<ASTnode> unary();
     std::unique_ptr<ASTnode> value();
+    std::unique_ptr<ASTnode> group();
 
     std::unique_ptr<ASTnode> array();
     std::unique_ptr<ASTnode> arrayAllocation();
@@ -51,7 +54,8 @@ class Parser
     std::unique_ptr<ASTnode> memberAccess(std::unique_ptr<ASTnode> base);
     std::unique_ptr<ASTnode> elementAccess(std::unique_ptr<ASTnode> base);
     std::unique_ptr<ASTnode> functionCall(std::unique_ptr<ASTnode> base);
-
+    std::unique_ptr<ASTnode> cast();
+    
     std::unique_ptr<ASTnode> type();
     std::unique_ptr<ASTnode> basicType();
     std::unique_ptr<ASTnode> userType();
